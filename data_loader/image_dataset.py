@@ -7,7 +7,7 @@ from PIL import Image
 from torch.utils.data import Dataset as TorchDataset
 from torchvision import transforms
 
-from ...configs import get_image_dataset_config
+from configs import get_image_dataset_config
 
 from .image_transforms import make_transforms
 

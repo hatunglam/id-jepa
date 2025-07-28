@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from torchvision import transforms
 
-from ...configs import get_image_dataset_transforms_config
+from configs import get_image_dataset_transforms_config
 
 transforms_config = get_image_dataset_transforms_config()
 
