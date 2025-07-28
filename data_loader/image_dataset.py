@@ -59,8 +59,10 @@ class ImageDataset(TorchDataset):
     def __getitem__(self, index) -> torch.Tensor:
         # Load the image file
         image_path: Path = self.image_paths[index]
-        image: Image = Image.open(image_path).convert("RGB")
+        image_rgb = Image.open(image_path).convert("RGB")
+        image_depth = Image.open(image_path).convert("L")
         # Apply transformations
-        image_tensor: torch.Tensor = self.transform(image)
+        rgb_tensor = self.transform(image_rgb)
+        depth_tensor = self.transform(image_depth) 
 
-        return image_tensor
+        return rgb_tensor, depth_tensor
