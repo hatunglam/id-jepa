@@ -28,7 +28,7 @@ class IDJEPA_base(GrayImageDepthTransformer):
             nn.LayerNorm(self.embed_dim) if self.post_enc_norm else nn.Identity()
         )
 
-        self.teacher_encoder = copy.deepcopy(self.student_encoder).cuda()
+        self.teacher_encoder = copy.deepcopy(self.student_encoder)
         # copy student encoder
 
         # TODO: To help prevent colapse and prioritise expressive representations

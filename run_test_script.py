@@ -1,10 +1,10 @@
 import torch
-from model.model_rgbd import IDJEPA
+from model_2.model_graydepth import IDJEPA
 
-rgb =torch.randn(3, 320, 320)
+img =torch.randn(1, 320, 320)
 depth = torch.randn(1, 320, 320)
 
-x_rgb = rgb.repeat(100, 1, 1, 1)
+x_img = img.repeat(100, 1, 1, 1)
 x_dep = depth.repeat(100, 1, 1, 1)
 
 experiment_config = {
@@ -22,7 +22,7 @@ experiment_config = {
 model_config = {
     "IMAGE_SIZE": 320, # <<<<<<<<<<<<< 
     "PATCH_SIZE": 16,
-    "IN_CHANS": 3,  
+    #"IN_CHANS": 3,  
     "POST_EMBED_NORM": True,
     "POST_ENCODE_NORM": True,
     "LAYER_DROPOUT": 0.1,
@@ -48,8 +48,7 @@ model = IDJEPA(
     momentum_limits=experiment_config["MOMENTUM_LIMITS"],
     img_size=model_config["IMAGE_SIZE"],
     patch_size=model_config["PATCH_SIZE"],
-    in_chans_rgb=3,
-    in_chans_dep=1,
+    in_chans=1,
     embed_dim=embed_dim,
     enc_depth=enc_depth,
     num_heads=num_heads,
@@ -62,7 +61,7 @@ model = IDJEPA(
 if __name__ == "__main__":
 
     y_pred, y_true = model(
-        x_rgb=x_rgb,
+        x_img=x_img,
         x_dep=x_dep,
         target_aspect_ratio=1.0,
         target_scale=0.2,

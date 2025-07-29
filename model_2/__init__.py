@@ -1,2 +1,2 @@
-from .model_rgbd import *
+from .model_graydepth import *
 from .vit import *
