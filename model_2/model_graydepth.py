@@ -34,7 +34,7 @@ class IDJEPA(IDJEPA_base, pl.LightningModule):
         **kwargs,
     ):
         pl.LightningModule.__init__(self)
-        JEPA_base.__init__(
+        IDJEPA_base.__init__(
             self,
             decoder_depth=decoder_depth,
             num_target_blocks=num_target_blocks,
