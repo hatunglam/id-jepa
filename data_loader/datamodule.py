@@ -2,8 +2,8 @@ from pathlib import Path
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
 
-from dataset import RGBDImageDataset
-from data_transform import rgb_transform, depth_transform, PairedRandomCrop
+from .dataset import RGBDImageDataset
+from .data_transform import rgb_transform, depth_transform, PairedRandomCrop
 
 
 class RGBDDataModule(pl.LightningDataModule):

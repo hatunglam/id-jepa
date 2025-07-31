@@ -1,6 +1,6 @@
 from typing import Callable, Dict
 
-from ...configs import get_image_experiment_config, get_image_model_config
+from configs import get_image_experiment_config, get_image_model_config
 from model_2.model_graydepth import IDJEPA
 from ..vit import get_model_config as get_vit_config
 
@@ -39,7 +39,7 @@ def create_ijepa_model(vit_size: str) -> IDJEPA:
         momentum_limits=experiment_config["MOMENTUM_LIMITS"],
         img_size=model_config["IMAGE_SIZE"],
         patch_size=model_config["PATCH_SIZE"],
-        in_chans_rgb=model_config["IN_CHANS"],
+        in_chans=model_config["IN_CHANS"],
         embed_dim=embed_dim,
         enc_depth=enc_depth,
         num_heads=num_heads,

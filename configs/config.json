@@ -1,17 +1,17 @@
 {
     "image": {
         "model": {
-            "IMAGE_SIZE": 224,
+            "IMAGE_SIZE": 480,
             "PATCH_SIZE": 16,
             "NUM_FRAMES": 1,
             "IN_CHANS_RGB": 3,
-            "IN_CHANS_DEPTH": 1,
+            "IN_CHANS": 1,
             "POST_EMBED_NORM": true,
             "POST_ENCODE_NORM": true,
             "LAYER_DROPOUT": 0.1
         },
         "dataset": {
-            "DATASET_PATH": "./data/image/imagenet/imagenet-object-localization-challenge/ILSVRC/Data/CLS-LOC",
+            "DATASET_DIR": "D:/Documents_D/processed_data",
             "ACCEPTABLE_FILE_EXTENSIONS": [".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG"],
             "SHUFFLE_DATASET": true,
             "transforms": {
@@ -37,7 +37,7 @@
             "MODEL_NAME": "i-jepa",
             "MODEL_SIZE": "tiny",
             "LR": 4e-3,
-            "BATCH_SIZE": 128,
+            "BATCH_SIZE": 32,
             "NUM_WORKERS": 16,
             "PIN_MEMORY": true,
             "PERSISTENT_WORKERS": true,

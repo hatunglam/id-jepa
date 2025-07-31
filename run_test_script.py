@@ -1,75 +1,84 @@
 import torch
-from model_2.model_graydepth import IDJEPA
+from pytorch_lightning import seed_everything
 
-img =torch.randn(1, 320, 320)
-depth = torch.randn(1, 320, 320)
+from model_2.model_builder import ijepa_model_builders
+from data_loader import RGBDDataModule
 
-x_img = img.repeat(100, 1, 1, 1)
-x_dep = depth.repeat(100, 1, 1, 1)
-
-experiment_config = {
-    "LR": 1e-3,
-    "WEIGHT_DECAY": 0.05,
-    "TARGET_ASPECT_RATIO": (0.75, 1.5),
-    "TARGET_SCALE_INTERVAL": (0.15, 0.2),
-    "CONTEXT_ASPECT_RATIO": 1.0,
-    "CONTEXT_SCALE": (0.85, 1.0),
-    "NUM_TARGET_BLOCKS": 4,
-    "M": 0.996,
-    "MOMENTUM_LIMITS": (0.996, 1.0),
-}
-
-model_config = {
-    "IMAGE_SIZE": 320, # <<<<<<<<<<<<< 
-    "PATCH_SIZE": 16,
-    #"IN_CHANS": 3,  
-    "POST_EMBED_NORM": True,
-    "POST_ENCODE_NORM": True,
-    "LAYER_DROPOUT": 0.1,
-}
-
-# Basic ViT settings
-embed_dim = 64
-enc_depth = 4
-num_heads = 4
-num_layers_decoder = 2
-
-# Instantiate model
-model = IDJEPA(
-    decoder_depth=num_layers_decoder,
-    lr=experiment_config["LR"],
-    weight_decay=experiment_config["WEIGHT_DECAY"],
-    target_aspect_ratio=experiment_config["TARGET_ASPECT_RATIO"],
-    target_scale_interval=experiment_config["TARGET_SCALE_INTERVAL"],
-    context_aspect_ratio=experiment_config["CONTEXT_ASPECT_RATIO"],
-    context_scale=experiment_config["CONTEXT_SCALE"],
-    num_target_blocks=experiment_config["NUM_TARGET_BLOCKS"],
-    m=experiment_config["M"],
-    momentum_limits=experiment_config["MOMENTUM_LIMITS"],
-    img_size=model_config["IMAGE_SIZE"],
-    patch_size=model_config["PATCH_SIZE"],
-    in_chans=1,
-    embed_dim=embed_dim,
-    enc_depth=enc_depth,
-    num_heads=num_heads,
-    post_emb_norm=model_config["POST_EMBED_NORM"],
-    post_enc_norm=model_config["POST_ENCODE_NORM"],
-    layer_dropout=model_config["LAYER_DROPOUT"],
-    testing_purposes_only=True,  # optional: avoid checkpoint saving
+from configs import (
+    get_image_experiment_config,
+    get_image_model_config,
+    get_image_dataset_config,
 )
 
-if __name__ == "__main__":
+def main():
+    # Make reproducible
+    seed_everything(42)
+    print("import complete")
+    print('__________________________________________________________________________')
 
-    y_pred, y_true = model(
+    # Load and override configs
+    experiment_config = get_image_experiment_config()
+    model_config = get_image_model_config()
+    dataset_config = get_image_dataset_config()
+
+    experiment_config["BATCH_SIZE"] = 1
+    dataset_dir = dataset_config["DATASET_DIR"]
+
+    print("Done getting config")
+    print('__________________________________________________________________________')
+
+    # Load datamodule with 1-worker for Windows safety
+    datamodule = RGBDDataModule(
+        dataset_dir=dataset_dir,
+        batch_size=1,
+        img_size=model_config["IMAGE_SIZE"],
+        num_workers=0,  # Avoid multiprocessing crash in test
+    )
+    datamodule.setup("fit")
+    loader = datamodule.train_dataloader()
+
+    print(">>>>> Finish loading data")
+    print('__________________________________________________________________________')
+
+    # Load the smallest model ("nano")
+    model = ijepa_model_builders["nano"]()
+    print(">>>>> Instantiate model Completed")
+    print('__________________________________________________________________________')
+
+    # Pull one batch
+    batch = next(iter(loader))
+    x_img, x_dep = batch
+    print("Image shape:", x_img.shape)
+    print("Depth shape:", x_dep.shape)
+
+    print(">>>>> Start training ......")
+    print('__________________________________________________________________________')
+
+    # Forward pass
+    model.train()
+    print(">>>>> Forward pass ....")
+    print('__________________________________________________________________________')
+
+    y_student, y_teacher = model(
         x_img=x_img,
         x_dep=x_dep,
-        target_aspect_ratio=1.0,
-        target_scale=0.2,
+        target_aspect_ratio=0.75,
+        target_scale=0.15,
         context_aspect_ratio=1.0,
-        context_scale=0.85,
+        context_scale=0.9
     )
 
-    print("Prediction shape:", y_pred.shape)
-    print("Ground truth shape:", y_true.shape)
+    print("Student prediction shape:", y_student[0].shape)
+    print("Teacher target shape:", y_teacher[0].shape)
+    print('__________________________________________________________________________')
 
-    print(model)
+    # Loss computation
+    loss = model.criterion(y_student, y_teacher)
+    print("Loss:", loss.item())
+
+    # Backward pass
+    loss.backward()
+    print("✅ Backward pass successful!")
+
+if __name__ == "__main__":
+    main()

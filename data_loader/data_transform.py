@@ -25,5 +25,6 @@ def rgb_transform():
 
 def depth_transform():
     return transforms.Compose([
-    transforms.ToTensor()
-])
+        transforms.ToTensor(),
+        transforms.Lambda(lambda x: x.float()), 
+    ])

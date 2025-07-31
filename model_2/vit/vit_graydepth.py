@@ -9,7 +9,7 @@ from .patch_embed import PatchEmbed2D
 class GrayImageDepthTransformer(nn.Module):
     def __init__(
             self,
-            img_size=224,
+            img_size=480,
             patch_size=16,
             num_frames=1,
             tubelet_size=2,
