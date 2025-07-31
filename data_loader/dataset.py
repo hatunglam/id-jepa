@@ -5,7 +5,7 @@ from PIL import Image
 
 
 class RGBDImageDataset(Dataset):
-    def __init__(self, dataset_dir, transform_rgb=None, transform_depth=None):
+    def __init__(self, dataset_dir, transform_pair=None, transform_rgb=None, transform_depth=None):
         """
         Args:
             dataset_dir (Path or str): Directory path containing 'rgb/' and 'depth/' folders.
@@ -18,6 +18,7 @@ class RGBDImageDataset(Dataset):
 
         assert len(self.rgb_files) == len(self.depth_files), "Mismatch in dataset size."
 
+        self.transform_pair = transform_pair
         self.transform_rgb = transform_rgb
         self.transform_depth = transform_depth
 
@@ -31,6 +32,9 @@ class RGBDImageDataset(Dataset):
         rgb_image = Image.open(rgb_path).convert("RGB")
         depth_image = Image.open(depth_path).convert("L")  
 
+        if self.transform_pair:
+            rgb_image, depth_image = self.transform_pair(rgb_image, depth_image)
+
         if self.transform_rgb:
             rgb_image = self.transform_rgb(rgb_image)
 
@@ -38,3 +42,6 @@ class RGBDImageDataset(Dataset):
             depth_image = self.transform_depth(depth_image)
 
         return rgb_image, depth_image
+    
+
+

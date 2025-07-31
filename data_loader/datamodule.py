@@ -2,8 +2,8 @@ from pathlib import Path
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
 
-from .dataset import RGBDImageDataset
-from .data_transform import rgb_transform, depth_transform
+from dataset import RGBDImageDataset
+from data_transform import rgb_transform, depth_transform, PairedRandomCrop
 
 
 class RGBDDataModule(pl.LightningDataModule):
@@ -13,26 +13,34 @@ class RGBDDataModule(pl.LightningDataModule):
         batch_size: int = 32,
         num_workers: int = 4,
         pin_memory: bool = True,
+        img_size = 480
     ):
         super().__init__()
+        self.img_size = img_size
         self.dataset_dir = Path(dataset_dir)
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.pin_memory = pin_memory
 
     def setup(self, stage=None):
+
+        paired_crop = PairedRandomCrop(size=(self.img_size, self.img_size))
+
         self.train_dataset = RGBDImageDataset(
             dataset_dir=self.dataset_dir / "train",
+            transform_pair=paired_crop,
             transform_rgb=rgb_transform(),
             transform_depth=depth_transform()
         )
         self.val_dataset = RGBDImageDataset(
             dataset_dir=self.dataset_dir / "val",
+            transform_pair=paired_crop,
             transform_rgb=rgb_transform(),
             transform_depth=depth_transform()
         )
         self.test_dataset = RGBDImageDataset(
             dataset_dir=self.dataset_dir / "test",
+            transform_pair=paired_crop,
             transform_rgb=rgb_transform(),
             transform_depth=depth_transform()
         )

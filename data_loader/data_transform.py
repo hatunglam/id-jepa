@@ -1,21 +1,31 @@
 from torchvision import transforms
+import torchvision.transforms.functional as F
+import random
 
-def rgb_transform(image_size=224):
+class PairedRandomCrop:
+    def __init__(self, size: int | tuple):
+        if isinstance(size, int):
+            size = (size, size)
+        self.size = size  # (h, w)
+
+    def __call__(self, img1, img2):
+        # Ensure both images are the same size
+        assert img1.size == img2.size, "RGB and Depth must have the same dimensions before cropping"
+        
+        i, j, h, w = transforms.RandomCrop.get_params(img1, output_size=self.size)
+        img1 = F.crop(img1, i, j, h, w)
+        img2 = F.crop(img2, i, j, h, w)
+        return img1, img2
+
+def rgb_transform():
     return transforms.Compose([
         transforms.Grayscale(num_output_channels=1),
-        transforms.Resize((image_size, image_size)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5], std=[0.5])
     ])
 
 def depth_transform():
-    """
-    Transform for Depth image:
-    - No resize (to preserve perspective)
-    - Convert to tensor
-    - Normalize to [-1, 1]
-    """
     return transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5], std=[0.5])
-    ])
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.5], std=[0.5])
+])
