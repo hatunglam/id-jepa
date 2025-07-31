@@ -36,9 +36,11 @@ class RGBDImageDataset(Dataset):
             rgb_image, depth_image = self.transform_pair(rgb_image, depth_image)
 
         if self.transform_rgb:
+            assert not self.transform_pair
             rgb_image = self.transform_rgb(rgb_image)
 
         if self.transform_depth:
+            assert not self.transform_pair
             depth_image = self.transform_depth(depth_image)
 
         return rgb_image, depth_image
