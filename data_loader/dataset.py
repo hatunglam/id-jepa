@@ -30,7 +30,7 @@ class RGBDImageDataset(Dataset):
         depth_path = self.depth_files[idx]
 
         rgb_image = Image.open(rgb_path).convert("RGB")
-        depth_image = Image.open(depth_path).convert("L")  
+        depth_image = Image.open(depth_path)
 
         if self.transform_pair:
             rgb_image, depth_image = self.transform_pair(rgb_image, depth_image)
