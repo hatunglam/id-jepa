@@ -6,10 +6,9 @@ class PairedRandomCrop:
     def __init__(self, size: int | tuple):
         if isinstance(size, int):
             size = (size, size)
-        self.size = size  # (h, w)
+        self.size = size 
 
     def __call__(self, img1, img2):
-        # Ensure both images are the same size
         assert img1.size == img2.size, "RGB and Depth must have the same dimensions before cropping"
         
         i, j, h, w = transforms.RandomCrop.get_params(img1, output_size=self.size)
