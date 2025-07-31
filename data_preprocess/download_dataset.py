@@ -1,16 +1,18 @@
 import os
 import requests
-import random
 from bs4 import BeautifulSoup
 from zipfile import ZipFile
 from tqdm import tqdm
 from collections import defaultdict
 
+# Target webpage
 URL = "https://cs.nyu.edu/~fergus/datasets/nyu_depth_v2.html"
-SAVE_DIR = "./raw_data"
+
+# Destination directory on D: drive
+SAVE_DIR = r"D:\Documents_D\nyu_data"
 os.makedirs(SAVE_DIR, exist_ok=True)
 
-# Step 1: Scrape HTML
+# Step 1: Scrape HTML content
 response = requests.get(URL)
 soup = BeautifulSoup(response.content, "html.parser")
 
@@ -25,16 +27,14 @@ for td in soup.find_all("td"):
             full_url = requests.compat.urljoin(URL, href)
             room_links[room_name].append(full_url)
 
-# Step 3: Pick 5 distinct room types randomly
-available_room_types = list(room_links.keys())
-random.shuffle(available_room_types)
-selected_room_types = available_room_types[:5]
+# Step 3: Define rooms you want to download
+target_rooms = ["bedrooms", "kitchens", "bathrooms", "living rooms"]
 
-print("Selected room types:", selected_room_types)
+# Step 4: Download one file per target room type
+for room in target_rooms:
 
-# Step 4: Download one zip from each selected room type
-for room in selected_room_types:
-    selected_zip_url = random.choice(room_links[room])
+    # Use the first zip
+    selected_zip_url = room_links[room][0]
     zip_filename = os.path.basename(selected_zip_url)
     zip_path = os.path.join(SAVE_DIR, zip_filename)
 
@@ -57,4 +57,6 @@ for room in selected_room_types:
     with ZipFile(zip_path, 'r') as zip_ref:
         zip_ref.extractall(SAVE_DIR)
 
-print("\n All 5 room types downloaded and extracted.")
+    os.remove(zip_path)  # delete zip after extracting
+
+print("\n Download Completed.")
