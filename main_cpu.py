@@ -43,9 +43,6 @@ ACCELERATOR = "cpu"
 DEVICES = 1
 PRECISION = 32
 
-# Disable matmul precision tweak on CPU
-# torch.set_float32_matmul_precision("high")  # Not used for CPU-only
-
 if __name__ == "__main__":
     pl.seed_everything(SEED)
 
@@ -85,7 +82,7 @@ if __name__ == "__main__":
         callbacks=[checkpoint_callback, lr_monitor],
         val_check_interval=VAL_CHECK_INTERVAL,
         logger=logger,
-        fast_dev_run=True,  # <--- Fast sanity check run
+        #fast_dev_run=True,  
     )
 
     # Train
