@@ -408,6 +408,45 @@ class IDJEPA(IDJEPA_base, pl.LightningModule):
         self.log("train_loss", loss)
 
         return loss
+    
+    def test_step(
+        self,
+        batch: torch.Tensor,
+        batch_idx: int,  # pylint: disable=unused-argument
+        dataloader_idx: int = 0,  # optional, for multi-dataloader use
+    ) -> torch.Tensor:
+        
+        """
+        Perform a test step for each batch in the test dataloader.
+        """
+        x_img, x_dep = batch
+
+        # Randomly generate target/context parameters
+        target_aspect_ratio: float = np.random.uniform(
+            self.target_aspect_ratio[0], self.target_aspect_ratio[1]
+        )
+        target_scale: float = np.random.uniform(
+            self.target_scale_interval[0], self.target_scale_interval[1]
+        )
+        context_scale: float = np.random.uniform(
+            self.context_scale[0], self.context_scale[1]
+        )
+
+        # Forward pass
+        y_student, y_teacher = self(
+            x_img=x_img,
+            x_dep=x_dep,
+            target_aspect_ratio=target_aspect_ratio,
+            target_scale=target_scale,
+            context_aspect_ratio=self.context_aspect_ratio,
+            context_scale=context_scale,
+        )
+
+        # Compute and log loss
+        loss = self.criterion(y_student, y_teacher)
+        self.log("test_loss", loss)
+
+        return loss
 
     def validation_step(  # pylint: disable=arguments-differ
         self,

@@ -11,7 +11,7 @@
             "LAYER_DROPOUT": 0.1
         },
         "dataset": {
-            "DATASET_DIR": "D:/Documents_D/processed_data",
+            "DATASET_DIR": "D:/Documents_D/processed_data", 
             "ACCEPTABLE_FILE_EXTENSIONS": [".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG"],
             "SHUFFLE_DATASET": true,
             "transforms": {
@@ -34,7 +34,7 @@
             "PREFETCH_FACTOR_OPTIONS": [1, 2, 4, 8, 16]
         },
         "experiment": {
-            "MODEL_NAME": "i-jepa",
+            "MODEL_NAME": "id-jepa",
             "MODEL_SIZE": "tiny",
             "LR": 4e-3,
             "BATCH_SIZE": 32,

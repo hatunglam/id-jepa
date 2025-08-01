@@ -16,6 +16,10 @@ class PairedRandomCrop:
         img2 = F.crop(img2, i, j, h, w)
         return img1, img2
 
+class ToFloatTensor:
+    def __call__(self, x):
+        return x.float()
+    
 def rgb_transform():
     return transforms.Compose([
         transforms.Grayscale(num_output_channels=1),
@@ -26,5 +30,5 @@ def rgb_transform():
 def depth_transform():
     return transforms.Compose([
         transforms.ToTensor(),
-        transforms.Lambda(lambda x: x.float()), 
+        ToFloatTensor(), 
     ])
