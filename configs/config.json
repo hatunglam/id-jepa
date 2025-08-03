@@ -11,7 +11,7 @@
             "LAYER_DROPOUT": 0.1
         },
         "dataset": {
-            "DATASET_DIR": "D:/Documents_D/processed_data", 
+            "DATASET_DIR": "/home/ec2-user/processed_data", 
             "ACCEPTABLE_FILE_EXTENSIONS": [".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG"],
             "SHUFFLE_DATASET": true,
             "transforms": {
