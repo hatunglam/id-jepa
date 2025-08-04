@@ -1,0 +1,9 @@
+torch
+pytorch-lightning
+opencv-python
+matplotlib
+tqdm
+einops
+transformers
+x_transformers
+tensorboard

@@ -471,6 +471,10 @@ class IDJEPA(IDJEPA_base, pl.LightningModule):
         """
         x_img, x_dep = batch
 
+        device = next(self.parameters()).device
+        x_img = x_img.to(device)
+        x_dep = x_dep.to(device)
+
         # Generate random target and context aspect ratio and scale
         target_aspect_ratio: float = np.random.uniform(
             self.target_aspect_ratio[0], self.target_aspect_ratio[1]

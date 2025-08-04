@@ -85,7 +85,7 @@ class IDJEPA_base(GrayImageDepthTransformer):
             target_blocks_list, dim=0
         )  # (num_target_blocks, batch_size, target_block_size, embed_dim)
 
-        return target_block
+        return target_block.cuda()
 
     def get_context_block(
         self,
@@ -147,7 +147,7 @@ class IDJEPA_base(GrayImageDepthTransformer):
         # Initialize tensor to hold prediction blocks
         prediction_blocks = torch.zeros(
             (num_target_blocks, batch_dim, num_patches, embed_dim)
-        ) 
+        ).cuda() 
 
         # Predict each target block separately using the context encoding and mask tokens
         for target_block_idx in range(num_target_blocks):
