@@ -33,12 +33,12 @@ class PredictorVAE(nn.Module):
         # Second layer (Z -> Hidden)
         self.fc2 = nn.Linear(z_dim, hidden_size)
         # Decoder layer (Hidden -> Hidden)
-        self.decoder = Decoder(
+        self.decode = Decoder(
             dim=hidden_size, depth=depth, heads=num_heads, layer_dropout=layer_dropout
         )
         # Output layer (Hidden -> Input)
         self.output = nn.Linear(hidden_size, embed_dim)
-        self.relu = F.relu()
+        self.relu = nn.ReLU()
     
     def encoder(self, x):
         h = self.relu(self.fc1(x))
@@ -48,7 +48,7 @@ class PredictorVAE(nn.Module):
 
     def decoder(self, x):
         h = self.fc2(x)
-        decoded = self.decoder(h)
+        decoded = self.decode(h)
         return self.output(decoded)
     
     def reparameterize(self, mu, logvar):
@@ -58,27 +58,27 @@ class PredictorVAE(nn.Module):
         eps = torch.randn_like(std)
         return mu + std*eps
 
-def forward(self, context_encoding, target_masks):
-    """
-    context_encoding: (B, num_context_patches, embed_dim)
-    target_masks:     (B, num_target_patches, embed_dim)
-    """
-    # Concatenate context + target mask
-    x = torch.cat((context_encoding, target_masks), dim=1)  # (B, total_patches, embed_dim)
+    def forward(self, context_encoding, target_masks):
+        """
+        context_encoding: (B, num_context_patches, embed_dim)
+        target_masks:     (B, num_target_patches, embed_dim)
+        """
+        # Concatenate context + target mask
+        x = torch.cat((context_encoding, target_masks), dim=1)  # (B, total_patches, embed_dim)
 
-    # Encode to get mu and logvar
-    mu, logvar = self.encoder(x)
+        # Encode to get mu and logvar
+        mu, logvar = self.encoder(x)
 
-    # Sample z using reparameterization trick
-    z = self.reparameterize(mu, logvar)
+        # Sample z using reparameterization trick
+        z = self.reparameterize(mu, logvar)
 
-    # Decode from latent
-    decoded = self.decoder(z)  # (B, total_patches, embed_dim)
+        # Decode from latent
+        decoded = self.decoder(z)  # (B, total_patches, embed_dim)
 
-    # Keep only target output
-    prediction = decoded[:, -target_masks.shape[1]:, :]  # (B, num_target_patches, embed_dim)
+        # Keep only target output
+        prediction = decoded[:, -target_masks.shape[1]:, :]  # (B, num_target_patches, embed_dim)
 
-    return prediction, mu, logvar
+        return prediction, mu, logvar
 
 def loss_vae(x, x_pred, mu, logvar):
     # To make it reconstruct better
