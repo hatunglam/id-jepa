@@ -3,6 +3,7 @@ from typing import Optional
 import torch
 import torch.nn as nn
 from x_transformers import Decoder
+import torch.nn.functional as F
 
 
 class Predictor(nn.Module):
@@ -10,31 +11,53 @@ class Predictor(nn.Module):
     def __init__(
         self,
         embed_dim,
+        hidden_size,
+        z_dim,
         num_heads,
         depth,
         layer_dropout = 0.0,
         predictor_embed_dim = None,
     ):
         super().__init__()
-        # Initialize the transformer-based decoder
+        
         self.decoder = Decoder(
             dim=embed_dim, depth=depth, heads=num_heads, layer_dropout=layer_dropout
         )
+        # Encoder:
+        # First FC Layer to project down (Input -> Hidden)
+        self.fc1 = nn.Linear(embed_dim, hidden_size)
+        # mu layer (Hidden -> Latent)
+        self.mu = nn.Linear(hidden_size, z_dim)
+        # logvar layer (Hidden -> Latent)
+        self.logvar = nn.Linear(hidden_size, z_dim)
 
-        self.predictor_embed = (
-            nn.Linear(embed_dim, predictor_embed_dim, bias=True)
-            if predictor_embed_dim
-            else nn.Identity()
+        # Decoder:
+        # Second layer (Z -> Hidden)
+        self.fc2 = nn.Linear(z_dim, hidden_size)
+        # Decoder layer (Hidden -> Hidden)
+        self.decoder = Decoder(
+            dim=hidden_size, depth=depth, heads=num_heads, layer_dropout=layer_dropout
         )
+        # Output layer (Hidden -> Input)
+        self.output = nn.Linear(hidden_size, embed_dim)
+    
+    def encoder(self, x):
+        h = self.fc1(x)
+        mu = self.mu(h)
+        logvar = self.logvar(h)
+        return mu, logvar
 
-        self.predictor_norm = (
-            nn.LayerNorm(predictor_embed_dim) if predictor_embed_dim else nn.Identity()
-        )
-        self.predictor_proj = (
-            nn.Linear(predictor_embed_dim, embed_dim, bias=True)
-            if predictor_embed_dim
-            else nn.Identity()
-        )
+    def decoder(self, x):
+        h = self.fc2(x)
+        decoded = self.decoder(h)
+        return self.output(decoded)
+    
+    def reparameterize(self, mu, logvar):
+        #logvar = log(std**2) -> std = sqrt(exp(logvar)) 
+        # logvar = torch.clamp(logvar, min=-4, max=4)
+        std = torch.exp(0.5*logvar)
+        eps = torch.randn_like(std)
+        return mu + std*eps
 
     def forward(
         self, context_encoding, target_masks
@@ -45,17 +68,7 @@ class Predictor(nn.Module):
             (context_encoding, target_masks), dim=1
         )  # (batch_size, num_context_patches + num_target_patches, embed_dim)
 
-        # Map context tokens to the predictor dimension
-        x = self.predictor_embed(x)
-
-        # Pass the concatenated tensor through the transformer decoder
-        x = self.decoder(x)  # (batch_size, predictor_embed_dim, embed_dim)
-
-        # Normalise and project predictor ouputs back to the input dimension
-        x = self.predictor_proj(
-            self.predictor_norm(x)
-        )  # (batch_size, num_context_patches + num_target_patches, embed_dim)
-
+        
         # Return the output corresponding to target tokens, i.e., the last len(target_masks) tokens
         prediction = x[
             :, -target_masks.shape[1] :, :  # Include entire batch

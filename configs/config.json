@@ -15,7 +15,7 @@
             "ACCEPTABLE_FILE_EXTENSIONS": [".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG"],
             "SHUFFLE_DATASET": true,
             "transforms": {
-                "RANDOM_CROP": 224,
+                "RANDOM_CROP": 480,
                 "RANDON_HFLIP": true,
                 "TO_TENSOR": true,
                 "NORMALIZE": {
@@ -35,15 +35,15 @@
         },
         "experiment": {
             "MODEL_NAME": "id-jepa",
-            "MODEL_SIZE": "tiny",
-            "LR": 4e-3,
+            "MODEL_SIZE": "base",
+            "LR": 1e-3,
             "BATCH_SIZE": 16,
             "NUM_WORKERS": 16,
             "PIN_MEMORY": true,
             "PERSISTENT_WORKERS": true,
             "PREFETCH_FACTOR": 2,
             "SEED": 42,
-            "MAX_EPOCHS": 3,
+            "MAX_EPOCHS": 15,
             "GRADIENT_CLIP_VAL": 0.1,
             "WEIGHT_DECAY": 0.05,
             "TARGET_ASPECT_RATIO": [0.75, 1.5],
@@ -57,7 +57,7 @@
         "runtime": {
             "ACCELERATOR": "gpu",
             "DEVICES": 1,
-            "PRECISION": "32-true",
+            "PRECISION": "16-mixed",
             "FLOAT32_MATMUL_PRECISION": "medium"
         },
         "tracking": {
