@@ -6,7 +6,7 @@ from x_transformers import Decoder
 import torch.nn.functional as F
 
 
-class Predictor(nn.Module):
+class PredictorVAE(nn.Module):
 
     def __init__(
         self,
