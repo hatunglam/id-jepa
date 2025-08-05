@@ -172,7 +172,7 @@ class IDJEPA_VAE(IDJEPA_base, pl.LightningModule):
 
         # For each of the target blocks to generate
         for target_block_idx in range(num_target_blocks):
-            start_patch: int = IDJEPA.randomly_select_starting_patch_for_block(
+            start_patch: int = IDJEPA_VAE.randomly_select_starting_patch_for_block(
                 patch_dim=patch_dim,
                 block_dim=block_dim,
                 seed=target_block_idx * seed if seed is not None else None,
@@ -256,7 +256,7 @@ class IDJEPA_VAE(IDJEPA_base, pl.LightningModule):
         block_dim: Tuple[int, int] = num_blocks_h, num_blocks_w
 
         # Randomly select the starting patch for the context block
-        start_patch: int = IDJEPA.randomly_select_starting_patch_for_block(
+        start_patch: int = IDJEPA_VAE.randomly_select_starting_patch_for_block(
             patch_dim=patch_dim,
             block_dim=block_dim,
             seed=seed,
@@ -307,14 +307,14 @@ class IDJEPA_VAE(IDJEPA_base, pl.LightningModule):
         target_patches: List[List[int]]
         all_unique_target_patches: Set[int]
 
-        target_patches, all_unique_target_patches = IDJEPA.generate_target_patches(
+        target_patches, all_unique_target_patches = IDJEPA_VAE.generate_target_patches(
             patch_dim=self.patch_embed.patch_shape,  # The number of patches in each dimension
             aspect_ratio=target_aspect_ratio,
             scale=target_scale,
             num_target_blocks=self.num_target_blocks,
         )
 
-        context_patches: List[int] = IDJEPA.generate_context_patches(
+        context_patches: List[int] = IDJEPA_VAE.generate_context_patches(
             patch_dim=self.patch_embed.patch_shape,
             aspect_ratio=context_aspect_ratio,
             scale=context_scale,
