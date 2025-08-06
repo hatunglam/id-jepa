@@ -1,7 +1,7 @@
 import os
 import torch
 
-from datamodule import RGBDDataModule
+from data_loader.datamodule import RGBDDataModule
 
 DATASET_DIR = "D:/Documents_D/processed_data"
 
@@ -24,4 +24,5 @@ print("Depth shape: ", x_depth.shape)
 print("Data type:      ", type(x_rgb), type(x_depth))
 print("RGB range:      ", f"[{x_rgb.min().item():.2f}, {x_rgb.max().item():.2f}]")
 print("Depth range:    ", f"[{x_depth.min().item():.2f}, {x_depth.max().item():.2f}]")
+print("Depth sample values:", x_depth[0, 0, :5, :5])
 
