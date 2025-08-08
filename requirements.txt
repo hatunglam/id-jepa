@@ -9,3 +9,4 @@ x_transformers
 tensorboard
 torchvision
 natsort
+albumentations
