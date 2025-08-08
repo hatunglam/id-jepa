@@ -2,6 +2,8 @@ from pathlib import Path
 from random import shuffle
 import cv2
 from tqdm import tqdm
+import numpy as np
+import time
 
 # --- Set up paths ---
 RAW_DATA_DIR = Path("D:/Documents_D/nyu_data")
@@ -39,7 +41,10 @@ def save_pairs(pairs, split):
         # Skip corrupted or unreadable images
         if rgb_img is None or depth_img is None:
             continue
-
+    
+        depth_img = depth_img.astype(np.uint16)
+        depth_img = depth_img.byteswap()
+        time.sleep(0.1)
         cv2.imwrite(str(rgb_dir / f"{i:05d}.png"), rgb_img)
         cv2.imwrite(str(depth_dir / f"{i:05d}.png"), depth_img)
         i += 1

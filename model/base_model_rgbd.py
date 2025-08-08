@@ -35,6 +35,9 @@ class JEPA_base(RGBDVisionTransformer):
             self.device
         )  # copy student encoder
 
+        for param in self.teacher_encoder.parameters():
+            param.requires_grad = False
+
         # TODO: To help prevent colapse and prioritise expressive representations
         # in the encoder, the decoder should be underpowered with respect to the encoder.
         self.predictor = Predictor(
@@ -42,6 +45,8 @@ class JEPA_base(RGBDVisionTransformer):
             num_heads=self.num_heads,
             depth=decoder_depth,
         )
+
+        self.depth_proj = nn.Conv2d(in_channels=1, out_channels=3, kernel_size=1, stride=1, bias=False)
 
     @torch.no_grad()
     def get_target_blocks(
@@ -229,6 +234,8 @@ class JEPA_base(RGBDVisionTransformer):
         """
         # -------------------------------------------------------------------------------------------
         # NOTE: Positional encoding applied to `x` during `self.forward_vit()`
+        if x_dep is not None and x_dep.shape[1] != x_rgb.shape[1]:
+            x_dep = self.depth_proj(x_dep)
         x_rgb, x_dep = self.forward_vit(
             x_rgb=x_rgb,
             x_dep=None if test_mode else x_dep,

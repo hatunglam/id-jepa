@@ -13,10 +13,10 @@ class RGBDDataModule(pl.LightningDataModule):
         batch_size: int = 32,
         num_workers: int = 4,
         pin_memory: bool = True,
-        img_size = 480
+        img_resize = 480
     ):
         super().__init__()
-        self.img_size = img_size
+        self.img_resize = img_resize
         self.dataset_dir = Path(dataset_dir)
         self.batch_size = batch_size
         self.num_workers = num_workers
@@ -24,25 +24,31 @@ class RGBDDataModule(pl.LightningDataModule):
 
     def setup(self, stage=None):
 
-        paired_crop = PairedRandomCrop(size=(self.img_size, self.img_size))
+        paired_crop = PairedRandomCrop(size=(self.img_resize, self.img_resize))
 
         self.train_dataset = RGBDImageDataset(
             dataset_dir=self.dataset_dir / "train",
-            transform_pair=paired_crop,
+            transform_pair=False,
+            transform_pair_fn=paired_crop,
             transform_rgb=rgb_transform(),
-            transform_depth=depth_transform()
+            transform_depth=depth_transform(),
+            img_resize=self.img_resize
         )
         self.val_dataset = RGBDImageDataset(
             dataset_dir=self.dataset_dir / "val",
-            transform_pair=paired_crop,
+            transform_pair=False,
+            transform_pair_fn=paired_crop,
             transform_rgb=rgb_transform(),
-            transform_depth=depth_transform()
+            transform_depth=depth_transform(),
+            img_resize=self.img_resize
         )
         self.test_dataset = RGBDImageDataset(
             dataset_dir=self.dataset_dir / "test",
-            transform_pair=paired_crop,
+            transform_pair=False,
+            transform_pair_fn=paired_crop,
             transform_rgb=rgb_transform(),
-            transform_depth=depth_transform()
+            transform_depth=depth_transform(),
+            img_resize=self.img_resize
         )
 
     def train_dataloader(self):

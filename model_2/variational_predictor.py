@@ -2,7 +2,7 @@ from typing import Optional
 
 import torch
 import torch.nn as nn
-from x_transformers import Decoder
+from x_transformers import Encoder
 import torch.nn.functional as F
 
 
@@ -33,7 +33,7 @@ class PredictorVAE(nn.Module):
         # Second layer (Z -> Hidden)
         self.fc2 = nn.Linear(z_dim, hidden_size)
         # Decoder layer (Hidden -> Hidden)
-        self.decode = Decoder(
+        self.encode = Encoder(
             dim=hidden_size, depth=depth, heads=num_heads, layer_dropout=layer_dropout
         )
         # Output layer (Hidden -> Input)
@@ -48,7 +48,7 @@ class PredictorVAE(nn.Module):
 
     def decoder(self, x):
         h = self.fc2(x)
-        decoded = self.decode(h)
+        decoded = self.encode(h)
         return self.output(decoded)
     
     def reparameterize(self, mu, logvar):

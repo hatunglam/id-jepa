@@ -57,7 +57,7 @@ if __name__ == "__main__":
     datamodule = RGBDDataModule(
         dataset_dir=dataset_config["DATASET_DIR"],
         batch_size=experiment_config["BATCH_SIZE"],
-        img_size=model_config["IMAGE_SIZE"],
+        img_resize=model_config["IMAGE_SIZE"],
     )
     print("RGBD datamodule loaded")
 

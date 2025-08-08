@@ -2,7 +2,7 @@ from typing import Optional
 
 import torch
 import torch.nn as nn
-from x_transformers import Decoder
+from x_transformers import Encoder
 
 
 class Predictor(nn.Module):
@@ -75,7 +75,7 @@ class Predictor(nn.Module):
     ):
         super().__init__()
         # Initialize the transformer-based decoder
-        self.decoder = Decoder(
+        self.encoder = Encoder(
             dim=embed_dim, depth=depth, heads=num_heads, layer_dropout=layer_dropout
         )
 
@@ -123,7 +123,7 @@ class Predictor(nn.Module):
         x = self.predictor_embed(x)
 
         # Pass the concatenated tensor through the transformer decoder
-        x = self.decoder(x)  # (batch_size, predictor_embed_dim, embed_dim)
+        x = self.encoder(x)  # (batch_size, predictor_embed_dim, embed_dim)
 
         # Normalise and project predictor ouputs back to the input dimension
         x = self.predictor_proj(
