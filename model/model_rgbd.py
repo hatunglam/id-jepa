@@ -248,9 +248,9 @@ class IDJEPA(JEPA_base, pl.LightningModule):
         h = (num_patches_block/aspect_ratio)**.5
         """
         num_blocks_h: int = int(
-            torch.sqrt(torch.tensor(num_patches_block / aspect_ratio))
+            torch.sqrt(torch.tensor(num_patches_block * aspect_ratio[0]))
         )
-        num_blocks_w: int = int(aspect_ratio * num_blocks_h)
+        num_blocks_w: int = int(num_patches_block / num_blocks_h)
 
         block_dim: Tuple[int, int] = num_blocks_h, num_blocks_w
 
@@ -300,7 +300,7 @@ class IDJEPA(JEPA_base, pl.LightningModule):
         x_dep: torch.Tensor,
         target_aspect_ratio: float,
         target_scale: float,
-        context_aspect_ratio: Number,
+        context_aspect_ratio: Tuple[float, float],
         context_scale: float,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         target_patches: List[List[int]]
@@ -388,9 +388,9 @@ class IDJEPA(JEPA_base, pl.LightningModule):
             low=self.target_scale_interval[0], high=self.target_scale_interval[1]
         )
 
-        context_scale: float = np.random.uniform(
-            self.context_scale[0], self.context_scale[1]
-        )
+        # context_scale: float = np.random.uniform(
+        #     self.context_scale[0], self.context_scale[1]
+        # )
 
         (
             y_student,  # prediction: (num_target_blocks, batch_size, target_block_size, embed_dim) 
@@ -401,7 +401,7 @@ class IDJEPA(JEPA_base, pl.LightningModule):
             target_aspect_ratio=target_aspect_ratio,
             target_scale=target_scale,
             context_aspect_ratio=self.context_aspect_ratio,
-            context_scale=context_scale,
+            context_scale=self.context_scale,
         )
 
         loss: torch.Tensor = self.criterion(y_student, y_teacher)
@@ -440,9 +440,9 @@ class IDJEPA(JEPA_base, pl.LightningModule):
             low=self.target_scale_interval[0], high=self.target_scale_interval[1]
         )
 
-        context_scale: float = np.random.uniform(
-            self.context_scale[0], self.context_scale[1]
-        )
+        # context_scale: float = np.random.uniform(
+        #     self.context_scale[0], self.context_scale[1]
+        # )
 
         (
             y_student,  # (num_target_blocks, batch_size, target_block_size, embed_dim)
@@ -453,7 +453,7 @@ class IDJEPA(JEPA_base, pl.LightningModule):
             target_aspect_ratio=target_aspect_ratio,
             target_scale=target_scale,
             context_aspect_ratio=self.context_aspect_ratio,
-            context_scale=context_scale,
+            context_scale=self.context_scale,
         )
 
         loss: torch.Tensor = self.criterion(y_student, y_teacher)
