@@ -51,8 +51,8 @@ class NYUDataset(Dataset):
                       preserve_range=True, mode='reflect', anti_aliasing=True)
     
     def __getitem__(self, idx):
-        image = self.nyu_data[idx][0]
-        depth =self.nyu_data[idx][1]
+        image = self.data_dir + self.nyu_data[idx][0].removeprefix("data/")
+        depth = self.data_dir + self.nyu_data[idx][1].removeprefix("data/")
         
         image = np.asarray(Image.open(image))
         
@@ -85,7 +85,7 @@ class NYUDataset(Dataset):
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
-    dataset = NYUDataset(data_dir='/workspace/data/', 
+    dataset = NYUDataset(data_dir="D:/Documents_D/data/data/", 
                          mode="train",
                          max_depth=1000.0,
                          img_resize=False,

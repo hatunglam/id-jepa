@@ -11,7 +11,7 @@
              "LAYER_DROPOUT": 0.1
             },
         "dataset": 
-            {"DATA_DIR": "/home/ec2-user/data/",
+            {"DATA_DIR": "D:/Documents_D/data/data/",
              "MAX_DEPTH": 1000.0,
              "IMG_RESIZE": 360,
              "RETURN_METRIC_DEPTH": false,
