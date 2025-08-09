@@ -96,7 +96,6 @@ class PatchEmbed2D(nn.Module):
         # Apply the convolutional layer to get patches
         x = self.conv(x)
         # Flatten the patches into a sequence
-        x = rearrange(x, "b e h w -> b (h w) e")
 
         return x  # (b, n, e)
 
