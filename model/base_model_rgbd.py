@@ -23,18 +23,18 @@ class JEPA_base(nn.Module):
         super().__init__()
         self.num_target_blocks = num_target_blocks
         self.mode = mode.lower()
-
-        self.mask_token = nn.Parameter(torch.randn(1, 1, self.embed_dim))
-        nn.init.trunc_normal_(self.mask_token, 0.02)
-    
-        self.post_enc_norm_jepa = (
-            nn.LayerNorm(self.embed_dim) if self.post_enc_norm else nn.Identity()
-        )
+       
         self.encoder = RGBDVisionTransformer(**kwargs)
         self.teacher_encoder = copy.deepcopy(self.encoder).to(self.device)  # copy student encoder
         for param in self.teacher_encoder.parameters():
             param.requires_grad = False
+        self.embed_dim = self.encoder.embed_dim
+        self.num_heads = self.encoder.num_heads
+        self.post_enc_norm = self.encoder.post_enc_norm
 
+        self.mask_token = nn.Parameter(torch.randn(1, 1, self.embed_dim))
+        nn.init.trunc_normal_(self.mask_token, 0.02)
+    
         # TODO: To help prevent colapse and prioritise expressive representations
         # in the encoder, the decoder should be underpowered with respect to the encoder.
         self.predictor = Predictor(
@@ -69,7 +69,7 @@ class JEPA_base(nn.Module):
         x = target_encoder.forward_vit(
             x  # NOTE: `x` already contains positional encoding from `self.forward_vit()` pass
         )  # (batch_size, num_patches, embed_dim), where num_patches = (output_height * output_width) if not self.is_video else (output_t * output_height * output_width)
-        x = self.post_enc_norm_jepa(x)  # (batch_size, num_patches, embed_dim)
+        x = target_encoder.post_enc_norm_jepa(x)  # (batch_size, num_patches, embed_dim)
 
         # Create a list to hold the target blocks
         target_blocks_list: List[torch.Tensor] = []
@@ -236,7 +236,7 @@ class JEPA_base(nn.Module):
         batch_size, num_context_patches, embed_dim = context_block.shape
 
         context_encoding: torch.Tensor = (
-            self.post_enc_norm_jepa(  # NOTE: `context_encoding` contains positional information from `x`, which underwent the `self.forward_vit()` pass
+            self.encoder.post_enc_norm_jepa(  # NOTE: `context_encoding` contains positional information from `x`, which underwent the `self.forward_vit()` pass
                 self.encoder.forward_skip(  # student encoder (ViT)
                     x=context_block,
                     skip_patch_embed=True,

@@ -1,6 +1,6 @@
 from typing import Callable, Dict
 
-from ...configs import get_image_experiment_config, get_image_model_config
+from configs import get_image_experiment_config, get_image_model_config
 from model.model_rgbd import IDJEPA
 from ..vit import get_model_config as get_vit_config
 

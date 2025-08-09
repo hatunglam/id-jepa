@@ -8,7 +8,7 @@ from configs import (get_image_experiment_config,
                      get_image_tracking_config,
                      get_image_model_config,
                      get_image_dataset_config,)
-from model_2.model_builder import ijepa_model_builders
+from model.model_builder import ijepa_model_builders
 from dataset import RGBDDataModule
 
 if __name__ == "__main__":

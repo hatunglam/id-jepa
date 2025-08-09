@@ -1,6 +1,6 @@
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
-from NYU_dataset import NYUDataset
+from .NYU_dataset import NYUDataset
 
 class RGBDDataModule(pl.LightningDataModule):
     def __init__(self,
