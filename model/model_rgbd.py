@@ -248,7 +248,7 @@ class IDJEPA(JEPA_base, pl.LightningModule):
         h = (num_patches_block/aspect_ratio)**.5
         """
         num_blocks_h: int = int(
-            torch.sqrt(torch.tensor(num_patches_block / aspect_ratio))
+            torch.sqrt(torch.tensor(num_patches_block * aspect_ratio))
         )
         num_blocks_w: int = int(num_patches_block / num_blocks_h)
 
