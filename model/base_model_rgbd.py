@@ -236,14 +236,20 @@ class JEPA_base(nn.Module):
         )
         batch_size, num_context_patches, embed_dim = context_block.shape
 
+        # context_encoding: torch.Tensor = (
+        #     self.encoder.post_enc_norm_jepa(  # NOTE: `context_encoding` contains positional information from `x`, which underwent the `self.forward_vit()` pass
+        #         self.encoder.forward_skip(  # student encoder (ViT)
+        #             x=context_block,
+        #             skip_patch_embed=True,
+        #         )
+        #     )
+        # )  # (batch_size, num_context_patches, embed_dim)
         context_encoding: torch.Tensor = (
-            self.encoder.post_enc_norm_jepa(  # NOTE: `context_encoding` contains positional information from `x`, which underwent the `self.forward_vit()` pass
                 self.encoder.forward_skip(  # student encoder (ViT)
                     x=context_block,
                     skip_patch_embed=True,
                 )
             )
-        )  # (batch_size, num_context_patches, embed_dim)
         batch_size, num_patches_enc, embed_dim = context_encoding.shape
         assert (
             num_context_patches == num_patches_enc  
