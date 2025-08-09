@@ -11,3 +11,5 @@ torchvision
 natsort
 albumentations
 gdown
+scikit-image
+scikit-learn

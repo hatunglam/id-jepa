@@ -307,14 +307,14 @@ class IDJEPA(JEPA_base, pl.LightningModule):
         all_unique_target_patches: Set[int]
 
         target_patches, all_unique_target_patches = IDJEPA.generate_target_patches(
-            patch_dim=self.patch_embed_dep.patch_shape,  # The number of patches in each dimension
+            patch_dim=self.encoder.patch_embed_dep.patch_shape,  # The number of patches in each dimension
             aspect_ratio=target_aspect_ratio,
             scale=target_scale,
             num_target_blocks=self.num_target_blocks,
         )
 
         context_patches: List[int] = IDJEPA.generate_context_patches(
-            patch_dim=self.patch_embed_rgb.patch_shape,
+            patch_dim=self.encoder.patch_embed_rgb.patch_shape,
             aspect_ratio=context_aspect_ratio,
             scale=context_scale,
             target_patches_to_exclude=all_unique_target_patches,
