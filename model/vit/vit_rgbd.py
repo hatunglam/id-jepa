@@ -23,11 +23,8 @@ class PositionEmbeddingSine(nn.Module):
         if scale is None:
             scale = 2 * math.pi
         self.scale = scale
-    
-    def forward(self, x: torch.Tensor, **kwargs):
-        return self._fwd(x, **kwargs)
 
-    def _forward_2d(self, x: torch.Tensor, **kwargs):
+    def forward(self, x: torch.Tensor, **kwargs):
         mask = kwargs.get("mask", torch.zeros((x.shape[0], x.shape[-2], x.shape[-1]),
                                                device=x.device, dtype=torch.bool))
         assert mask is not None
