@@ -85,7 +85,7 @@ class NYUDataset(Dataset):
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
-    dataset = NYUDataset(data_dir="D:/Documents_D/data/data/", 
+    dataset = NYUDataset(data_dir="/home/ec2-user/data/", 
                          mode="train",
                          max_depth=1000.0,
                          img_resize=False,
