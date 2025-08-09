@@ -1,7 +1,7 @@
 {"image": 
     {
         "model": 
-            {"IMAGE_SIZE": [480,640],
+            {"IMAGE_SIZE": [240,320],
              "PATCH_SIZE": 16,
              "NUM_FRAMES": 1,
              "IN_CHANS_RGB": 3,
@@ -13,7 +13,7 @@
         "dataset": 
             {"DATA_DIR": "/home/ec2-user/data/data/",
              "MAX_DEPTH": 1000.0,
-             "IMG_RESIZE": false,
+             "IMG_RESIZE": 240,
              "RETURN_METRIC_DEPTH": false,
              "APPLY_TRANSFORMS": true
             },
