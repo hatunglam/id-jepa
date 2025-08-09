@@ -19,3 +19,5 @@
 2- Do not use depth_proj, copy teacher from student exactly as it is. To make depth 3 channel, stack depth 3 times.
 
 3- Copy teacher exactly from student, do not stack depth but use gray scale images.
+
+gdown --id 1WoOZOBpOWfmwe7bknWS5PMUCLBPFKTOw
