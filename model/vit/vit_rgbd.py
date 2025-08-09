@@ -7,18 +7,18 @@ from .patch_embed import PatchEmbed2D, PatchEmbed3D
 import numpy as np
 import math
 
-def get_2d_sincos_pos_embed(embed_dim, grid_size, cls_token=False):
+def get_2d_sincos_pos_embed(embed_dim, grid_size_h, grid_size_w, cls_token=False):
     """
     grid_size: int of the grid height and width
     return:
     pos_embed: [grid_size*grid_size, embed_dim] or [1+grid_size*grid_size, embed_dim] (w/ or w/o cls_token)
     """
-    grid_h = np.arange(grid_size, dtype=float)
-    grid_w = np.arange(grid_size, dtype=float)
+    grid_h = np.arange(grid_size_h, dtype=float)
+    grid_w = np.arange(grid_size_w, dtype=float)
     grid = np.meshgrid(grid_w, grid_h)  # here w goes first
     grid = np.stack(grid, axis=0)
 
-    grid = grid.reshape([2, 1, grid_size, grid_size])
+    grid = grid.reshape([2, 1, grid_size_h, grid_size_w])
     pos_embed = get_2d_sincos_pos_embed_from_grid(embed_dim, grid)
     if cls_token:
         pos_embed = np.concatenate([np.zeros([1, embed_dim]), pos_embed], axis=0)
@@ -142,7 +142,8 @@ class RGBDVisionTransformer(nn.Module):
 
         self.pos_embedding = nn.Parameter(torch.zeros(1, self.num_patches, embed_dim), requires_grad=False)
         pos_embed = get_2d_sincos_pos_embed(self.pos_embedding.shape[-1],
-                                            int(self.num_patches**.5),
+                                            patch_shape[0],
+                                            patch_shape[1]
                                             cls_token=False)
         self.pos_embedding.data.copy_(torch.from_numpy(pos_embed).float().unsqueeze(0))
 
