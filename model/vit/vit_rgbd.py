@@ -142,8 +142,8 @@ class RGBDVisionTransformer(nn.Module):
 
         self.pos_embedding = nn.Parameter(torch.zeros(1, self.num_patches, embed_dim), requires_grad=False)
         pos_embed = get_2d_sincos_pos_embed(self.pos_embedding.shape[-1],
-                                            patch_shape[0],
-                                            patch_shape[1]
+                                            self.patch_embed_rgb.patch_shape[0],
+                                            self.patch_embed_rgb.patch_shape[1],
                                             cls_token=False)
         self.pos_embedding.data.copy_(torch.from_numpy(pos_embed).float().unsqueeze(0))
 
