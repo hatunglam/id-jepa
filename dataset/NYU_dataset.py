@@ -10,7 +10,7 @@ import albumentations as A
 
 class NYUDataset(Dataset):
     def __init__(self,
-                 data_dir: str,
+                 data_dir: str, 
                  mode: str,
                  max_depth: int = 1000.0,
                  img_resize: Union[int, bool] = False,
@@ -25,7 +25,7 @@ class NYUDataset(Dataset):
         if apply_transforms:
             self._init_transforms()
         self._init_dataset()
-   
+    
     def _init_dataset(self):
         with open(f'{self.data_dir}nyu2_{self.mode}.csv', mode='r') as file:
             data_csv = csv.reader(file)
@@ -33,29 +33,29 @@ class NYUDataset(Dataset):
         if self.mode == 'train':
             shuffle(nyu_data, random_state=0)
         self.nyu_data = nyu_data
-   
+    
     def _init_transforms(self):
         self.spatial_transforms = A.Compose([A.HorizontalFlip(p=0.5),
                                              A.VerticalFlip(p=0.2)])
         self.image_only_transforms = A.OneOf([A.ChannelShuffle(p=0.5),
                                               A.OneOf([A.ISONoise(color_shift=(0.0, 0.01), intensity=(0.15, 0.30), p=1.0),
                                                        A.GaussNoise(var_limit=(10.0, 50.0), p=1.0)], p=0.5),
-                                              A.RandomGamma(gamma_limit=(80, 125), p=0.5)],
+                                              A.RandomGamma(gamma_limit=(80, 125), p=0.5)], 
                                               p=1.0)
-   
+    
     def __len__(self):
         return len(self.nyu_data)
-   
+    
     def nyu_resize(self, image, img_resize):
         return resize(image, (img_resize, int(img_resize*4/3)),
                       preserve_range=True, mode='reflect', anti_aliasing=True)
-   
+    
     def __getitem__(self, idx):
         image = self.nyu_data[idx][0]
-        depth = self.nyu_data[idx][1]
-       
+        depth =self.nyu_data[idx][1]
+        
         image = np.asarray(Image.open(image))
-       
+        
         if self.mode == 'train':
             depth = np.clip(np.asarray(Image.open(depth))/255*self.max_depth,
                             0,
@@ -64,10 +64,10 @@ class NYUDataset(Dataset):
                 transformed = self.spatial_transforms(image=image, mask=depth)
                 image, depth = transformed['image'], transformed['mask']
                 image = self.image_only_transforms(image=image)['image']
-       
+        
         if self.mode == 'test':
             depth = np.asarray(Image.open(depth), dtype=np.float32).copy().astype(float) / 10.0 # 0.0 to 1000 cm    
-       
+        
         image = np.clip(image / 255., 0.0, 1.0)
         depth = depth / self.max_depth # 0.0 to 1 (Normalized)
 
@@ -85,7 +85,7 @@ class NYUDataset(Dataset):
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
-    dataset = NYUDataset(data_dir='D:/Documents_D/data/data/',
+    dataset = NYUDataset(data_dir='/workspace/data/', 
                          mode="train",
                          max_depth=1000.0,
                          img_resize=False,

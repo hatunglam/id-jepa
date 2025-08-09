@@ -1,39 +1,25 @@
 import copy
 from typing import Any, List, Literal, Optional, Set, Tuple, Union
-
 import torch
 import torch.nn as nn
-
 from utils.types import Number
 
-from model.predictor_rgbd import Predictor
-from model.vit import RGBDVisionTransformer
-
-# pylint: disable=pointless-string-statement
-
-
-class JEPA_base(nn.Module):
-    def __init__(
-        self,
-        decoder_depth: int,
-        num_target_blocks: int = 4,
-        mode: Literal["test", "train"] = "train",
-        **kwargs: Any,
-    ):
+class ID_JEPA(nn.Module):
+    def __init__(self,):
         super().__init__()
         self.num_target_blocks = num_target_blocks
         self.mode = mode.lower()
 
         self.mask_token = nn.Parameter(torch.randn(1, 1, self.embed_dim))
         nn.init.trunc_normal_(self.mask_token, 0.02)
-    
+
         self.post_enc_norm_jepa = (
             nn.LayerNorm(self.embed_dim) if self.post_enc_norm else nn.Identity()
         )
-        self.encoder = RGBDVisionTransformer(**kwargs)
-        self.teacher_encoder = copy.deepcopy(self.encoder).to(self.device)  # copy student encoder
-        for param in self.teacher_encoder.parameters():
-            param.requires_grad = False
+
+        self.teacher_encoder = copy.deepcopy(self.encoder).to(
+            self.device
+        )  # copy student encoder
 
         # TODO: To help prevent colapse and prioritise expressive representations
         # in the encoder, the decoder should be underpowered with respect to the encoder.
@@ -42,8 +28,6 @@ class JEPA_base(nn.Module):
             num_heads=self.num_heads,
             depth=decoder_depth,
         )
-
-        self.depth_proj = nn.Conv2d(in_channels=1, out_channels=3, kernel_size=1, stride=1, bias=False)
 
     @torch.no_grad()
     def get_target_blocks(
@@ -63,10 +47,10 @@ class JEPA_base(nn.Module):
                 - target_block: A tensor containing the generated target blocks of shape (num_target_blocks, batch_size, target_block_size, embed_dim).
         """
         # Ensure the target encoder is in evaluation mode
-        target_encoder = self.teacher_encoder.eval()
+        target_encoder = self.teacher.eval()
 
         # Encode the input tensor
-        x = target_encoder.forward_vit(
+        x = target_encoder(
             x  # NOTE: `x` already contains positional encoding from `self.forward_vit()` pass
         )  # (batch_size, num_patches, embed_dim), where num_patches = (output_height * output_width) if not self.is_video else (output_t * output_height * output_width)
         x = self.post_enc_norm_jepa(x)  # (batch_size, num_patches, embed_dim)
@@ -91,7 +75,7 @@ class JEPA_base(nn.Module):
             target_blocks_list, dim=0
         )  # (num_target_blocks, batch_size, target_block_size, embed_dim)
 
-        return target_block
+        return target_block.cuda()
 
     def get_context_block(
         self,
@@ -153,7 +137,7 @@ class JEPA_base(nn.Module):
         # Initialize tensor to hold prediction blocks
         prediction_blocks = torch.zeros(
             (num_target_blocks, batch_dim, num_patches, embed_dim)
-        ) 
+        ).cuda()
 
         # Predict each target block separately using the context encoding and mask tokens
         for target_block_idx in range(num_target_blocks):
@@ -168,20 +152,15 @@ class JEPA_base(nn.Module):
             target_masks: torch.Tensor = self.mask_token.repeat(
                 batch_dim, num_patches, 1
             )
-            # num_patches: number of patches in each Target block
-            # self.mask_token --> (1, 1, embed_dim)
-            # --> target_mask shape: (batch, n_patches_perblock, embed_dim)
 
             # The target tokens (initialised as `target_masks`) must contain positional information.
             # The `context_encoding` already contains positional encoding from `self.forward_vit()` pass,
             # thus we must add positional embeddings to the targets
-            target_pos_embedding = self.encoder.pos_embedding[
+            target_pos_embedding = self.pos_embedding[
                 :,  # Include batch dim
                 target_patches[target_block_idx],  # Include target patch only
                 :,  # Include all embed dim
             ]
-            # get the position of only the selected target mask only
-            
             target_masks = target_masks + target_pos_embedding
 
             # Generate prediction for the current target block
@@ -194,31 +173,27 @@ class JEPA_base(nn.Module):
 
         return prediction_blocks
 
-    def forward_base(
-        self,
-        x_rgb: torch.Tensor,
-        x_dep: torch.Tensor,
-        target_patches: List[List[int]],  # [ [id2, id2, ...], [id2, id2, ...], ...]
-        context_patches: List[int],   # [id1, id2, ...]
-    ) -> Union[Tuple[torch.Tensor, torch.Tensor], torch.Tensor]:
+    def forward(self,
+                x: torch.Tensor,
+                target_patches: List[List[int]],
+                context_patches: List[int],) -> Union[Tuple[torch.Tensor, torch.Tensor], torch.Tensor]:
         test_mode: bool = self.mode == "test"
-        
-        if x_dep is not None and x_dep.shape[1] != x_rgb.shape[1]:
-            x_dep = self.depth_proj(x_dep)
-        x_rgb = self.encoder.forward_vit(x=x_rgb,
-                                         patch_embed_only=not test_mode)
-
-        if test_mode:
-            return x_rgb, None
-        
-        # -------------------------------------------------------------------------------------------
-        batch_size, num_patches, embed_dim = (  # pylint: disable=unused-variable
-            x_rgb.shape
+        x: torch.Tensor = self.forward_vit(
+            x=x,
+            patch_embed_only=not test_mode,
         )
+        batch_size, num_patches, embed_dim = (  # pylint: disable=unused-variable
+            x.shape
+        )  # where num_patches = (output_height * output_width) if not self.is_video else (output_t * output_height * output_width)
 
+        # If in test mode, return the full embedding using the student encoder
+        if test_mode:
+            return x  # (batch_size, num_patches, embed_dim)
+
+        ### Get target embeddings using the target encoder
         target_blocks: torch.Tensor = (
-            self.get_target_blocks(
-                x= x_dep,
+            self.get_target_blocks(  # NOTE: `target_blocks` contain positional information from `x`, which underwent the `self.forward_vit()` pass
+                x=x,
                 target_patches=target_patches,
             )
         )
@@ -226,10 +201,10 @@ class JEPA_base(nn.Module):
             target_blocks.shape
         )
 
-        # Get context embeddings excluding the target patches
+        ### Get context embeddings excluding the target patches
         context_block: torch.Tensor = (
             self.get_context_block(  # NOTE: `context_block` contains positional information from `x`, which underwent the `self.forward_vit()` pass
-                x= x_rgb,
+                x=x,
                 context_patches=context_patches,
             )
         )
@@ -237,18 +212,17 @@ class JEPA_base(nn.Module):
 
         context_encoding: torch.Tensor = (
             self.post_enc_norm_jepa(  # NOTE: `context_encoding` contains positional information from `x`, which underwent the `self.forward_vit()` pass
-                self.encoder.forward_skip(  # student encoder (ViT)
+                self.encoder(  # student encoder (ViT)
                     x=context_block,
-                    skip_patch_embed=True,
                 )
             )
         )  # (batch_size, num_context_patches, embed_dim)
         batch_size, num_patches_enc, embed_dim = context_encoding.shape
         assert (
-            num_context_patches == num_patches_enc  
+            num_context_patches == num_patches_enc
         ), f"The number of patches in the context_block ({num_context_patches}) does not equal the number of patches in the context_encoding ({num_patches_enc})."
 
-        # Make predictions using the decoder
+        ### Make predictions using the decoder
         prediction_blocks = self.make_predictions(
             num_target_blocks=num_target_blocks,
             batch_dim=batch_size,
@@ -268,81 +242,3 @@ class JEPA_base(nn.Module):
             prediction_blocks,  # (num_target_blocks, batch_size, target_block_size, embed_dim)
             target_blocks,  # (num_target_blocks, batch_size, target_block_size, embed_dim)
         )
-
-    @staticmethod
-    def randomly_select_starting_patch_for_block(
-        patch_dim: Union[Tuple[int, int], Tuple[int, int, int]],
-        block_dim: Union[Tuple[int, int], Tuple[int, int, int]],
-        seed: Optional[int] = None,
-    ) -> int:
-        """
-        (Placeholder function)
-
-        Randomly selects the patch defining the 2D/3D block's starting position (on a linear index).
-
-        Parameters:
-        patch_dim (Union[Tuple[int, int], Tuple[int, int, int]]): A tuple containing the number of patches in each dimension (width and height)/(temporal dimension, width and height).
-        block_dim (Union[Tuple[int, int], Tuple[int, int, int]]): A tuple containing the number of patches in each dimension (width and height)/(temporal dimension, width and height) of the block from which the patch is to be extracted.
-        seed (Optional[int]): An optional random seed for reproducibility.
-
-        Returns:
-        int: The starting position of the patch within the block, represented as a linear index.
-
-        NOTE:
-        Patches are the basic (processing) units of the image/video (e.g. 16x16/num_framesx16x16 pixels).
-        Blocks are larger regions composed of multiple patches.
-        In training, the model attempts to understand blocks within an image/video - ie. context blocks - by processing it one patch at a time,
-        and uses this understanding is used to predict the structure and content of (the target blocks within) an image/video in a more abstract way.
-
-        Linear index coordinates are used to define the starting patch for a block,
-        and map 2D/3D pixel coordinates onto a 1D array index (flattened form).
-        """
-        raise NotImplementedError()
-
-    @staticmethod
-    def generate_target_patches(
-        patch_dim: Union[Tuple[int, int], Tuple[int, int, int]],
-        aspect_ratio: Number,
-        scale: Number,
-        num_target_blocks: int,
-    ) -> Tuple[List[List[int]], Set[int]]:
-        """
-        (Placeholder function)
-
-        Generate (spatial/spatio-temporal) target patches for each 2D/3D target block.
-
-        Args:
-            patch_dim (Union[Tuple[int, int], Tuple[int, int, int]]): The number of patches in each dimension (height, width)/(temporal, height, width).
-            aspect_ratio (Number): Aspect ratio to be maintained for target blocks.
-            scale (Number): Scaling factor for the number of patches in the target block.
-            num_target_blocks (int): Number of target blocks to generate.
-
-        Returns:
-            Tuple[List[List[int]], Set[int]]:
-                - target_patches: A list of lists containing indices of patches for each target block.
-                - all_patches: A set of all unique patches used in target blocks.
-        """
-        raise NotImplementedError()
-
-    @staticmethod
-    def generate_context_patches(
-        patch_dim: Union[Tuple[int, int], Tuple[int, int, int]],
-        aspect_ratio: Number,
-        scale: Number,
-        target_patches_to_exclude: Set[int],
-    ) -> List[int]:
-        """
-        (Placeholder function)
-
-        Generate a list of patch indices for the 2D/3D context block, excluding target patches.
-
-        Args:
-            patch_dim (Union[Tuple[int, int], Tuple[int, int, int]]): Dimensions of the patches (height, width)/(temporal, height, width).
-            aspect_ratio (Number): Aspect ratio to be maintained for the context block.
-            scale (Number): Scaling factor for the number of patches in the context block.
-            target_patches_to_exclude (Set[int]): Set containing indices of target patches.
-
-        Returns:
-            List[int]: A list of patch indices for the context block excluding target patches.
-        """
-        raise NotImplementedError()

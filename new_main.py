@@ -17,7 +17,6 @@ if __name__ == "__main__":
     tracking_config = get_image_tracking_config()
     model_config = get_image_model_config()
     dataset_config = get_image_dataset_config()
-    model_config["IMAGE_SIZE"] = tuple(model_config["IMAGE_SIZE"])
     
     MODEL_NAME = experiment_config["MODEL_NAME"]
     MODEL_SIZE = experiment_config["MODEL_SIZE"]

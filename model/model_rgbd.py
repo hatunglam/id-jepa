@@ -379,7 +379,7 @@ class IDJEPA(JEPA_base, pl.LightningModule):
         torch.Tensor
             _description_
         """
-        x_rgb, x_dep = batch
+        x_rgb, x_dep = batch["image"], batch["depth"]
         # Generate random target and context aspect ratio and scale
         target_aspect_ratio: float = np.random.uniform(
             self.target_aspect_ratio[0], self.target_aspect_ratio[1]
@@ -430,7 +430,7 @@ class IDJEPA(JEPA_base, pl.LightningModule):
         torch.Tensor
             The aggregated loss for the batch.
         """
-        x_rgb, x_dep = batch
+        x_rgb, x_dep = batch["image"], batch["depth"]
 
         # Generate random target and context aspect ratio and scale
         target_aspect_ratio: float = np.random.uniform(
@@ -484,7 +484,7 @@ class IDJEPA(JEPA_base, pl.LightningModule):
         torch.Tensor
             _description_
         """
-        x_rgb, x_dep = batch
+        x_rgb, x_dep = batch["image"], batch["depth"]
 
         # Generate random target and context aspect ratio
         target_aspect_ratio: float = np.random.uniform(

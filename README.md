@@ -13,3 +13,9 @@
 
 
 
+1- RGB (3 channel) + Depth (1 channel) 
+   Project Depth to 3 channel (not inside teacher, will be outside, to faciliate exact copy of teacher from student. Thus not updated using EMA).
+
+2- Do not use depth_proj, copy teacher from student exactly as it is. To make depth 3 channel, stack depth 3 times.
+
+3- Copy teacher exactly from student, do not stack depth but use gray scale images.
