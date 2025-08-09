@@ -404,7 +404,12 @@ class IDJEPA(JEPA_base, pl.LightningModule):
             context_aspect_ratio=self.context_aspect_ratio,
             context_scale=context_scale,
         )
+        device = y_student.device if y_student.is_cuda else (
+            y_teacher.device if y_teacher.is_cuda else torch.device("cpu")
+        )
 
+        y_student = y_student.to(device)
+        y_teacher = y_teacher.to(device)
         loss: torch.Tensor = self.criterion(y_student, y_teacher)
         self.log("train_loss", loss)
 
@@ -457,7 +462,12 @@ class IDJEPA(JEPA_base, pl.LightningModule):
             context_aspect_ratio=self.context_aspect_ratio,
             context_scale=context_scale,
         )
+        device = y_student.device if y_student.is_cuda else (
+            y_teacher.device if y_teacher.is_cuda else torch.device("cpu")
+        )
 
+        y_student = y_student.to(device)
+        y_teacher = y_teacher.to(device)
         loss: torch.Tensor = self.criterion(y_student, y_teacher)
         self.log("val_loss", loss)
 
