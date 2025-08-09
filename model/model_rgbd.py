@@ -248,7 +248,7 @@ class IDJEPA(JEPA_base, pl.LightningModule):
         h = (num_patches_block/aspect_ratio)**.5
         """
         num_blocks_h: int = int(
-            torch.sqrt(torch.tensor(num_patches_block * aspect_ratio[0]))
+            torch.sqrt(torch.tensor(num_patches_block / aspect_ratio))
         )
         num_blocks_w: int = int(num_patches_block / num_blocks_h)
 
@@ -300,7 +300,7 @@ class IDJEPA(JEPA_base, pl.LightningModule):
         x_dep: torch.Tensor,
         target_aspect_ratio: float,
         target_scale: float,
-        context_aspect_ratio: Tuple[float, float],
+        context_aspect_ratio: Number,
         context_scale: float,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         target_patches: List[List[int]]
@@ -388,7 +388,8 @@ class IDJEPA(JEPA_base, pl.LightningModule):
             low=self.target_scale_interval[0], high=self.target_scale_interval[1]
         )
 
-        # context_scale: float = np.random.uniform(
+        context_scale: float = self.context_scale[0]
+        # np.random.uniform(
         #     self.context_scale[0], self.context_scale[1]
         # )
 
@@ -401,7 +402,7 @@ class IDJEPA(JEPA_base, pl.LightningModule):
             target_aspect_ratio=target_aspect_ratio,
             target_scale=target_scale,
             context_aspect_ratio=self.context_aspect_ratio,
-            context_scale=self.context_scale,
+            context_scale=context_scale,
         )
 
         loss: torch.Tensor = self.criterion(y_student, y_teacher)
@@ -440,7 +441,8 @@ class IDJEPA(JEPA_base, pl.LightningModule):
             low=self.target_scale_interval[0], high=self.target_scale_interval[1]
         )
 
-        # context_scale: float = np.random.uniform(
+        context_scale: float = self.context_scale[0]
+        # np.random.uniform(
         #     self.context_scale[0], self.context_scale[1]
         # )
 
@@ -453,7 +455,7 @@ class IDJEPA(JEPA_base, pl.LightningModule):
             target_aspect_ratio=target_aspect_ratio,
             target_scale=target_scale,
             context_aspect_ratio=self.context_aspect_ratio,
-            context_scale=self.context_scale,
+            context_scale=context_scale,
         )
 
         loss: torch.Tensor = self.criterion(y_student, y_teacher)
