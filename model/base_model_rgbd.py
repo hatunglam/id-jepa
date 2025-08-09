@@ -3,7 +3,7 @@ from typing import Any, List, Literal, Optional, Set, Tuple, Union
 
 import torch
 import torch.nn as nn
-
+import torch.nn.functional as F
 from utils.types import Number
 
 from model.predictor_rgbd import Predictor
@@ -69,7 +69,8 @@ class JEPA_base(nn.Module):
         x = target_encoder.forward_vit(
             x  # NOTE: `x` already contains positional encoding from `self.forward_vit()` pass
         )  # (batch_size, num_patches, embed_dim), where num_patches = (output_height * output_width) if not self.is_video else (output_t * output_height * output_width)
-        x = target_encoder.post_enc_norm_jepa(x)  # (batch_size, num_patches, embed_dim)
+        # x = target_encoder.post_enc_norm_jepa(x)  # (batch_size, num_patches, embed_dim)
+        # x = F.layer_norm(x, (x.size(-1),)) # How IJEPA does it
 
         # Create a list to hold the target blocks
         target_blocks_list: List[torch.Tensor] = []
