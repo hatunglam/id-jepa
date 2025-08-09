@@ -411,7 +411,7 @@ class IDJEPA(JEPA_base, pl.LightningModule):
         y_student = y_student.to(device)
         y_teacher = y_teacher.to(device)
         loss: torch.Tensor = self.criterion(y_student, y_teacher)
-        self.log("train_loss", loss)
+        self.log("train_loss", loss, on_step=True, prog_bar=True, on_epoch=False)
 
         return loss
 
