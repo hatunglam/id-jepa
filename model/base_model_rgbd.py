@@ -247,7 +247,6 @@ class JEPA_base(nn.Module):
         context_encoding: torch.Tensor = (
                 self.encoder.forward_skip(  # student encoder (ViT)
                     x=context_block,
-                    skip_patch_embed=True,
                 )
             )
         batch_size, num_patches_enc, embed_dim = context_encoding.shape
