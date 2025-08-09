@@ -1,7 +1,7 @@
 {"image": 
     {
         "model": 
-            {"IMAGE_SIZE": [360,480],
+            {"IMAGE_SIZE": [480,640],
              "PATCH_SIZE": 16,
              "NUM_FRAMES": 1,
              "IN_CHANS_RGB": 3,
@@ -13,7 +13,7 @@
         "dataset": 
             {"DATA_DIR": "/home/ec2-user/data/data/",
              "MAX_DEPTH": 1000.0,
-             "IMG_RESIZE": 360,
+             "IMG_RESIZE": false,
              "RETURN_METRIC_DEPTH": false,
              "APPLY_TRANSFORMS": true
             },
@@ -30,7 +30,7 @@
             {"MODEL_NAME": "id-jepa",
              "MODEL_SIZE": "base",
              "LR": 1e-3,
-             "BATCH_SIZE": 16,
+             "BATCH_SIZE": 8,
              "NUM_WORKERS": 4,
              "PIN_MEMORY": true,
              "PERSISTENT_WORKERS": true,
