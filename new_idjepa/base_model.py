@@ -20,7 +20,7 @@ class JEPA_base(nn.Module):
             **kwargs
     ):
         super().__init__()
-        self.device = "cpu"
+        self.device = "gpu"
         self.n_heads = n_heads
         self.mode = mode.lower()
         self.context_ratio_range = context_ratio_range

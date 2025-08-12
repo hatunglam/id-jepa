@@ -1,3 +1,50 @@
+from transformers import AutoModel, AutoImageProcessor
+from transformers.models.dinov2.modeling_dinov2 import Dinov2Model
+from transformers import Dinov2Config
+from transformers.models.bit.image_processing_bit import BitImageProcessor
+
+pre_trained_img_model = AutoModel.from_pretrained(
+    "facebook/dinov2-base",
+    trust_remote_code=False,
+)
+
+config = pre_trained_img_model.config
+img_model = Dinov2Model(config)
+
+img_feature_extractor: BitImageProcessor = AutoImageProcessor.from_pretrained(
+    "facebook/dinov2-base"
+)
+
+depth_feature_extractor: BitImageProcessor = AutoImageProcessor.from_pretrained(
+"facebook/dinov2-base"
+)
+
+def image_preprocessor(image):
+
+    img_feature_extractor.do_rescale = False
+    img_feature_extractor.do_center_crop = True
+    img_feature_extractor.do_resize = False
+    img_feature_extractor.do_normalize = True
+    img_feature_extractor.do_convert_rgb = False
+    processed_img = img_feature_extractor(images=image, return_tensors="pt")
+    return processed_img
+
+def depth_preprocessor(depth):
+
+    depth_feature_extractor.do_rescale = False
+    depth_feature_extractor.do_center_crop = True
+    depth_feature_extractor.do_resize = False
+    depth_feature_extractor.do_normalize = False
+    depth_feature_extractor.do_convert_rgb = False
+    depth_feature_extractor.image_std = [1, 1, 1]
+    depth_feature_extractor.image_mean = [0, 0, 0]
+    processed_depth = depth_feature_extractor(images=depth, return_tensors="pt")
+    depth_tensor = processed_depth.repeat(3, 1, 1)
+    return depth_tensor
+
+
+from new_idjepa.training import IDJEPA
+from dataset.datamodule import RGBDDataModule
 import gc
 import torch
 import pytorch_lightning as pl
@@ -8,8 +55,6 @@ from configs import (get_image_experiment_config,
                      get_image_tracking_config,
                      get_image_model_config,
                      get_image_dataset_config,)
-from model_2.model_builder import ijepa_model_builders
-from dataset import RGBDDataModule
 
 if __name__ == "__main__":
     experiment_config = get_image_experiment_config()
@@ -17,6 +62,7 @@ if __name__ == "__main__":
     tracking_config = get_image_tracking_config()
     model_config = get_image_model_config()
     dataset_config = get_image_dataset_config()
+    model_config["IMAGE_SIZE"] = tuple(model_config["IMAGE_SIZE"])
     
     MODEL_NAME = experiment_config["MODEL_NAME"]
     MODEL_SIZE = experiment_config["MODEL_SIZE"]
@@ -29,12 +75,25 @@ if __name__ == "__main__":
 
     pl.seed_everything(SEED)
 
-    # Build model
     model_id = f"{MODEL_SIZE}_{SEED}_{LR:.1e}-{MAX_EPOCHS}"
-    model = ijepa_model_builders[MODEL_SIZE]()
-    print(f"Model built: {MODEL_NAME}_{model_id}")
 
-    # Build datamodule
+    jepa_model = IDJEPA(
+        image_encoder=img_model,
+        image_preprocessor=image_preprocessor,
+        depth_encoder=pre_trained_img_model,
+        depth_preprocessor=depth_preprocessor,
+        decoder_depth=6,
+        n_heads=8,
+        predictor_embed_dim=256,
+        post_enc_norm=False,
+        mode="train",
+        context_ratio_range=(0.85, 0.95),
+        target_mask_range=(0.15, 0.25),
+        freeze="depth",
+        lr=LR,
+        weight_decay=0.05
+    )
+
     datamodule = RGBDDataModule(dataset_config, experiment_config)
     print("RGBD datamodule loaded")
 
@@ -60,12 +119,11 @@ if __name__ == "__main__":
                          logger=logger,)
 
     # Train
-    trainer.fit(model, datamodule=datamodule)
+    trainer.fit(jepa_model, datamodule=datamodule)
     trainer.save_checkpoint(f"{CHECKPOINT_DIR}/{MODEL_NAME}_{model_id}.ckpt")
 
-    # Test
-    trainer.test(model, datamodule=datamodule)
 
-    # Cleanup
-    del datamodule
-    gc.collect()
+
+
+
+
