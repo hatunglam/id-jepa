@@ -43,8 +43,7 @@ class IDJEPA(JEPA_base, pl.LightningModule):
 
         self.criterion = nn.MSELoss()
 
-    def forward(self, data):
-        x_img, x_dep = data["image"], data["depth"]
+    def forward(self, x_img, x_dep):
         return self.forward_base(
             image=x_img,
             depth=x_dep
