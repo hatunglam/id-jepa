@@ -38,6 +38,9 @@ class IDJEPA(JEPA_base, pl.LightningModule):
         self.image_preprocessor = image_preprocessor
         self.depth_preprocessor = depth_preprocessor
 
+        self.image_preprocessor = image_preprocessor
+        self.depth_preprocessor = depth_preprocessor
+
         self.lr = lr 
         self.weight_decay = weight_decay
 
@@ -56,10 +59,17 @@ class IDJEPA(JEPA_base, pl.LightningModule):
                       ):
         self.mode = "train"
         x_img, x_dep = batch["image"], batch["depth"]
+<<<<<<< HEAD
 
         x_img = self.image_preprocessor(x_img)
         x_dep = self.depth_preprocessor(x_dep)
 
+=======
+        
+        x_img = self.image_preprocessor(x_img)
+        x_dep = self.depth_preprocessor(x_dep)
+                          
+>>>>>>> 79f1217f6e4357da12c38efc863e542b27f84247
         y_predicted, y_teacher = self(x_img=x_img,
                                       x_dep=x_dep
                                       )
