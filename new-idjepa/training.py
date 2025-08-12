@@ -34,9 +34,6 @@ class IDJEPA(JEPA_base, pl.LightningModule):
             target_mask_range=target_mask_range,
             freeze=freeze,
             )
-        
-        self.image_preprocessor = image_preprocessor
-        self.depth_preprocessor = depth_preprocessor
 
         self.image_preprocessor = image_preprocessor
         self.depth_preprocessor = depth_preprocessor
