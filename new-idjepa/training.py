@@ -38,7 +38,8 @@ class IDJEPA(JEPA_base, pl.LightningModule):
 
         self.criterion = nn.MSELoss()
 
-    def forward(self, x_img, x_dep):
+    def forward(self, data):
+        x_img, x_dep = data["image"], data["depth"]
         return self.forward_base(
             image=x_img,
             depth=x_dep
@@ -49,7 +50,7 @@ class IDJEPA(JEPA_base, pl.LightningModule):
                       batch_idx
                       ):
         self.mode = "train"
-        x_img, x_dep = batch
+        x_img, x_dep = batch["image"], batch["depth"]
         y_predicted, y_teacher = self(x_img=x_img,
                                       x_dep=x_dep
                                       )
@@ -63,7 +64,7 @@ class IDJEPA(JEPA_base, pl.LightningModule):
                       batch_idx
                       ):
         self.mode = "train"
-        x_img, x_dep = batch
+        x_img, x_dep = batch["image"], batch["depth"]
         y_predicted, y_teacher = self(x_img=x_img,
                                       x_dep=x_dep
                                       )
@@ -77,7 +78,7 @@ class IDJEPA(JEPA_base, pl.LightningModule):
                       batch_idx
                       ):
         self.mode = "test"
-        x_img, x_dep = batch
+        x_img, x_dep = batch["image"], batch["depth"]
         return self(x_img=x_img,
                     x_dep=x_dep
                     )
