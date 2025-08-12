@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from x_transformers import Encoder
-from predictor import Predictor
+from .predictor import Predictor
 
 class JEPA_base(nn.Module):
 

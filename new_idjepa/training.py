@@ -1,4 +1,4 @@
-from base_model import JEPA_base
+from .base_model import JEPA_base
 import numpy as np
 import pytorch_lightning as pl
 import torch
