@@ -20,7 +20,7 @@ class JEPA_base(nn.Module):
             **kwargs
     ):
         super().__init__()
-        self.device = "gpu"
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.n_heads = n_heads
         self.mode = mode.lower()
         self.context_ratio_range = context_ratio_range
