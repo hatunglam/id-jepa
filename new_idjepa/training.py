@@ -58,6 +58,8 @@ class IDJEPA(JEPA_base, pl.LightningModule):
 
         x_img = self.image_preprocessor(x_img)
         x_dep = self.depth_preprocessor(x_dep)
+        x_img = x_img.to(self.device)
+        x_dep = x_dep.to(self.device)
 
         y_predicted, y_teacher = self(x_img=x_img,
                                       x_dep=x_dep
@@ -76,6 +78,8 @@ class IDJEPA(JEPA_base, pl.LightningModule):
 
         x_img = self.image_preprocessor(x_img)
         x_dep = self.depth_preprocessor(x_dep)
+        x_img = x_img.to(self.device)
+        x_dep = x_dep.to(self.device)
 
         y_predicted, y_teacher = self(x_img=x_img,
                                       x_dep=x_dep
@@ -94,7 +98,9 @@ class IDJEPA(JEPA_base, pl.LightningModule):
 
         x_img = self.image_preprocessor(x_img)
         x_dep = self.depth_preprocessor(x_dep)
-        
+        x_img = x_img.to(self.device)
+        x_dep = x_dep.to(self.device)
+                
         return self(x_img=x_img,
                     x_dep=x_dep
                     )
