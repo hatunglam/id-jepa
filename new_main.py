@@ -39,7 +39,8 @@ def depth_preprocessor(depth):
     depth_feature_extractor.image_std = [1, 1, 1]
     depth_feature_extractor.image_mean = [0, 0, 0]
     processed_depth = depth_feature_extractor(images=depth, return_tensors="pt")
-    depth_tensor = processed_depth.repeat(3, 1, 1)
+    depth_tensor = processed_depth["pixel_values"]
+    depth_tensor = processed_depth.repeat(1, 3, 1, 1)
     return depth_tensor
 
 
