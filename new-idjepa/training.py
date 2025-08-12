@@ -7,7 +7,9 @@ import torch.nn as nn
 class IDJEPA(JEPA_base, pl.LightningModule):
     def __init__(self,
                  image_encoder,
+                 image_preprocessor,
                  depth_encoder,
+                 depth_preprocessor,
                  decoder_depth,
                  n_heads,
                  predictor_embed_dim,
@@ -33,6 +35,9 @@ class IDJEPA(JEPA_base, pl.LightningModule):
             freeze=freeze,
             )
 
+        self.image_preprocessor = image_preprocessor
+        self.depth_preprocessor = depth_preprocessor
+
         self.lr = lr 
         self.weight_decay = weight_decay
 
@@ -51,6 +56,10 @@ class IDJEPA(JEPA_base, pl.LightningModule):
                       ):
         self.mode = "train"
         x_img, x_dep = batch["image"], batch["depth"]
+        
+        x_img = self.image_preprocessor(x_img)
+        x_dep = self.depth_preprocessor(x_dep)
+                          
         y_predicted, y_teacher = self(x_img=x_img,
                                       x_dep=x_dep
                                       )
