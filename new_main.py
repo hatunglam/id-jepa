@@ -24,7 +24,7 @@ def image_preprocessor(image):
     img_feature_extractor.do_rescale = False
     img_feature_extractor.do_center_crop = True
     img_feature_extractor.do_resize = False
-    img_feature_extractor.do_normalize = True
+    img_feature_extractor.do_normalize = False
     img_feature_extractor.do_convert_rgb = False
     processed_img = img_feature_extractor(images=image, return_tensors="pt")
     return processed_img["pixel_values"]
