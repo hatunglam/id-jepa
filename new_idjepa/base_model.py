@@ -20,7 +20,7 @@ class JEPA_base(nn.Module):
             **kwargs
     ):
         super().__init__()
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.n_heads = n_heads
         self.mode = mode.lower()
         self.context_ratio_range = context_ratio_range
@@ -41,10 +41,10 @@ class JEPA_base(nn.Module):
 
         if freeze == "depth":
             for p in self.depth_encoder.parameters():
-                p.require_grads = False # Freeze depth encoder
+                p.require_grad = False # Freeze depth encoder
         elif freeze == "image":
             for p in self.image_encoder.parameters():
-                p.require_grads = False # Freeze depth encoder
+                p.require_grad = False # Freeze image encoder
 
 
         # Initialize Predictor module
@@ -105,7 +105,7 @@ class JEPA_base(nn.Module):
             batch_size=batch,
             num_tokens=n_target_patches,
             num_masked=num_target_masks,
-            device=self.device
+            device=self._device
         )
 
         batch, n_chans, height, width = depth.shape
