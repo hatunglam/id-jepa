@@ -251,6 +251,11 @@ class JEPA_base(nn.Module):
         # Expand mask token to (B, T, D)
         mask_token_expanded = mask_token.expand(B, T, D)  # (B, T, D)
 
+        print("last hidden: ", last_hidden_state.shape)
+        print("mask: ", mask.shape)
+        print("mask token: ", mask_token.shape)
+        print("mask token exp: ", mask_token_expanded.shape)
+
         # Compute context masks
         target_masks = []
         target_blocks = []
