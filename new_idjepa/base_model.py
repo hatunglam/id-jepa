@@ -41,10 +41,10 @@ class JEPA_base(nn.Module):
 
         if freeze == "depth":
             for p in self.depth_encoder.parameters():
-                p.require_grad = False # Freeze depth encoder
+                p.requires_grad = False # Freeze depth encoder
         elif freeze == "image":
             for p in self.image_encoder.parameters():
-                p.require_grad = False # Freeze image encoder
+                p.requires_grad = False # Freeze image encoder
 
 
         # Initialize Predictor module
@@ -114,7 +114,9 @@ class JEPA_base(nn.Module):
                                                                    height,
                                                                    width
                                                                    )
-        )
+        ) # (1, n_tokens, embed_dim)
+
+        pos_embeddings = pos_embeddings.squeeze(0) # (n_tokens, embed_dim)
         
         (target_masks, target_blocks) = self.create_target_masks_and_blocks(last_hidden_state=depth_embeddings,
                                                                             pos_embeddings=pos_embeddings,
@@ -211,7 +213,7 @@ class JEPA_base(nn.Module):
     def create_target_masks_and_blocks(
         self,
         last_hidden_state: torch.Tensor,  # (B, T, D)
-        pos_embeddings: torch.Tensor,  # (B, T, D)
+        pos_embeddings: torch.Tensor,  # (T, D)
         mask_token: nn.Parameter,  # (1, 1, D)
         mask: torch.BoolTensor,  # (B, T)
     ):
@@ -251,11 +253,11 @@ class JEPA_base(nn.Module):
         # Expand mask token to (B, T, D)
         mask_token_expanded = mask_token.expand(B, T, D)  # (B, T, D)
 
-        print("last hidden: ", last_hidden_state.shape, "  expect: ", (B, T, D ))
-        print("mask: ", mask.shape,  "  expect: ", (B, T))
-        print("mask token: ", mask_token.shape,  "  expect: ", (1, 1, D ))
-        print("mask token exp: ", mask_token_expanded.shape,  "  expect: ", (B, T, D ))
-        print("pos emb: ", pos_embeddings.shape, "  expect: ", (B, T, D ))
+        # print("last hidden: ", last_hidden_state.shape, "  expect: ", (B, T, D ))
+        # print("mask: ", mask.shape,  "  expect: ", (B, T))
+        # print("mask token: ", mask_token.shape,  "  expect: ", (1, 1, D ))
+        # print("mask token exp: ", mask_token_expanded.shape,  "  expect: ", (B, T, D ))
+        # print("pos emb: ", pos_embeddings.shape, "  expect: ", (B, T, D ))
 
         # Compute context masks
         target_masks = []

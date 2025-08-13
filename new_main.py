@@ -91,7 +91,7 @@ if __name__ == "__main__":
         post_enc_norm=False,
         mode="train",
         context_ratio_range=(0.85, 0.95),
-        target_mask_range=(0.15, 0.25),
+        target_mask_range=(0.85, 0.95),
         freeze="depth",
         lr=LR,
         weight_decay=0.05
