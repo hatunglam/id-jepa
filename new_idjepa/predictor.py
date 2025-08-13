@@ -17,8 +17,8 @@ class Predictor(nn.Module):
     ):
         super().__init__()
         # Initialize the transformer-based decoder
-        self.encoder = Encoder(
-            dim=embed_dim, depth=depth, heads=num_heads, layer_dropout=layer_dropout
+        self.encoder_bottleneck = Encoder(
+            dim=predictor_embed_dim, depth=depth, heads=num_heads, layer_dropout=layer_dropout
         )
 
         self.predictor_embed = (
@@ -48,7 +48,7 @@ class Predictor(nn.Module):
         x = self.predictor_embed(x)
 
         # Pass the concatenated tensor through the transformer decoder
-        x = self.encoder(x)  # (batch_size, predictor_embed_dim, embed_dim)
+        x = self.encoder_bottleneck(x)  # (batch_size, predictor_embed_dim, embed_dim)
 
         # Normalise and project predictor ouputs back to the input dimension
         x = self.predictor_proj(

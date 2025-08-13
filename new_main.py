@@ -87,7 +87,7 @@ if __name__ == "__main__":
         depth_preprocessor=depth_preprocessor,
         decoder_depth=6,
         n_heads=8,
-        predictor_embed_dim=256,
+        predictor_embed_dim=768,
         post_enc_norm=False,
         mode="train",
         context_ratio_range=(0.85, 0.95),
