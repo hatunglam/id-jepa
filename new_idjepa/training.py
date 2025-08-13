@@ -85,7 +85,7 @@ class IDJEPA(JEPA_base, pl.LightningModule):
                                       x_dep=x_dep
                                       )
         loss = self.criterion(y_predicted, y_teacher)
-        self.log("validation_loss", loss)
+        self.log("val_loss", loss)
 
         return loss
 
