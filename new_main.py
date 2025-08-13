@@ -27,7 +27,6 @@ def image_preprocessor(image):
     img_feature_extractor.do_normalize = False
     img_feature_extractor.do_convert_rgb = False
     processed_img = img_feature_extractor(images=image, return_tensors="pt")
-    print("image shape: ", processed_img["pixel_values"].shape)
     return processed_img["pixel_values"]
 
 def depth_preprocessor(depth):
@@ -42,7 +41,6 @@ def depth_preprocessor(depth):
     processed_depth = depth_feature_extractor(images=depth, return_tensors="pt")
     depth_tensor = processed_depth["pixel_values"]
     depth_tensor = depth_tensor.repeat(1, 3, 1, 1)
-    print("depth shape: ", depth_tensor.shape)
     return depth_tensor
 
 
