@@ -267,7 +267,7 @@ class JEPA_base(nn.Module):
             masked_indices = mask[b]  # (T,)
 
             target_masks.append(
-                mask_token_expanded[b][masked_indices] + pos_embeddings[b][masked_indices]
+                mask_token_expanded[b][masked_indices] + pos_embeddings[masked_indices]
             )  # (N_masked, D)
             target_blocks.append(last_hidden_state[b][masked_indices])  # (N_masked, D)
 
