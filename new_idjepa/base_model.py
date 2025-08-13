@@ -257,7 +257,7 @@ class JEPA_base(nn.Module):
         print("mask: ", mask.shape,  "  expect: ", (B, T))
         print("mask token: ", mask_token.shape,  "  expect: ", (1, 1, D ))
         print("mask token exp: ", mask_token_expanded.shape,  "  expect: ", (B, T, D ))
-        print("pos emb: ", pos_embeddings.shape, "  expect: ", (B, T, D ))
+        print("pos emb: ", pos_embeddings.shape, "  expect: ", (T, D ))
 
         # Compute context masks
         target_masks = []
@@ -265,6 +265,9 @@ class JEPA_base(nn.Module):
 
         for b in range(B):
             masked_indices = mask[b]  # (T,)
+
+            print("mask: ",mask_token_expanded[b][masked_indices].shape)
+            print("ps: ", pos_embeddings[b][masked_indices].shape)
 
             target_masks.append(
                 mask_token_expanded[b][masked_indices] + pos_embeddings[b][masked_indices]
