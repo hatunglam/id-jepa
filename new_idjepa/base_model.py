@@ -110,7 +110,7 @@ class JEPA_base(nn.Module):
 
         batch, n_chans, height, width = depth.shape
         pos_embeddings = (
-            self.image_encoder.embeddings.interpolate_pos_encoding(depth_embeddings,
+            self.depth_encoder.embeddings.interpolate_pos_encoding(depth_embeddings,
                                                                    height,
                                                                    width
                                                                    )
