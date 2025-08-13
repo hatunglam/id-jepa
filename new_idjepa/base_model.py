@@ -266,11 +266,6 @@ class JEPA_base(nn.Module):
         for b in range(B):
             masked_indices = mask[b]  # (T,)
 
-            print("mask: ",mask_token_expanded[b][masked_indices].shape)
-            print("ps: ", pos_embeddings[b][masked_indices].shape)
-            import time
-            time.sleep(0.5)
-
             target_masks.append(
                 mask_token_expanded[b][masked_indices] + pos_embeddings[b][masked_indices]
             )  # (N_masked, D)
