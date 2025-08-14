@@ -19,6 +19,7 @@ class IDJEPA(JEPA_base, pl.LightningModule):
                  context_ratio_range=(0.85, 0.95),
                  target_mask_range=(0.15, 0.25),
                  freeze="depth",
+                 variational_predictor=False,
                  lr=1e-3,
                  weight_decay=0.05):
         
@@ -34,7 +35,7 @@ class IDJEPA(JEPA_base, pl.LightningModule):
             context_ratio_range=context_ratio_range,
             target_mask_range=target_mask_range,
             freeze=freeze,
-            variational_predictor=False
+            variational_predictor=variational_predictor
             )
 
         self.image_preprocessor = image_preprocessor
