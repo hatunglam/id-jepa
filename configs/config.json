@@ -41,7 +41,7 @@
              "WEIGHT_DECAY": 0.05,
              "TARGET_ASPECT_RATIO": [0.75, 1.5],
              "TARGET_SCALE_INTERVAL": [0.15, 0.2],
-             "CONTEXT_ASPECT_RATIO": 0.75,
+             "CONTEXT_ASPECT_RATIO": 1.0,
              "CONTEXT_SCALE": [0.85, 1.0],
              "NUM_TARGET_BLOCKS": 4,
              "M": 0.996,
