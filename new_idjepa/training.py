@@ -97,10 +97,10 @@ class IDJEPA(JEPA_base, pl.LightningModule):
         if self.variational_predictor:
             y_student, mu, logvar = y_predicted
             loss = loss_vae(y_teacher, y_student, mu, logvar)
-            self.log("train_loss", loss)
+            self.log("val_loss", loss)
         else:
             loss = self.criterion(y_predicted, y_teacher)
-            self.log("train_loss", loss)
+            self.log("val_loss", loss)
 
         return loss
 
