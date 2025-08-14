@@ -4,6 +4,10 @@ from transformers import Dinov2Config
 from transformers.models.bit.image_processing_bit import BitImageProcessor
 
 USE_VARIATIONAL_PREDICTOR = True
+if USE_VARIATIONAL_PREDICTOR:
+    print("Training Using Variational Predictor")
+else:
+    print("Training With Default Predictor")
 
 pre_trained_img_model = AutoModel.from_pretrained(
     "facebook/dinov2-base",
