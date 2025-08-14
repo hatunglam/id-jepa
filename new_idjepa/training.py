@@ -3,6 +3,7 @@ import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
+from .variational_predictor import loss_vae
 
 class IDJEPA(JEPA_base, pl.LightningModule):
     def __init__(self,
@@ -33,6 +34,7 @@ class IDJEPA(JEPA_base, pl.LightningModule):
             context_ratio_range=context_ratio_range,
             target_mask_range=target_mask_range,
             freeze=freeze,
+            variational_predictor=False
             )
 
         self.image_preprocessor = image_preprocessor
@@ -47,7 +49,7 @@ class IDJEPA(JEPA_base, pl.LightningModule):
         return self.forward_base(
             image=x_img,
             depth=x_dep
-        )
+        ) # (prediction, actual)
     
     def training_step(self,
                       batch,
@@ -64,8 +66,14 @@ class IDJEPA(JEPA_base, pl.LightningModule):
         y_predicted, y_teacher = self(x_img=x_img,
                                       x_dep=x_dep
                                       )
-        loss = self.criterion(y_predicted, y_teacher)
-        self.log("train_loss", loss)
+        
+        if self.variational_predictor:
+            y_student, mu, logvar = y_predicted
+            loss = loss_vae(y_teacher, y_student, mu, logvar)
+            self.log("train_loss", loss)
+        else:
+            loss = self.criterion(y_predicted, y_teacher)
+            self.log("train_loss", loss)
 
         return loss
 
@@ -84,8 +92,14 @@ class IDJEPA(JEPA_base, pl.LightningModule):
         y_predicted, y_teacher = self(x_img=x_img,
                                       x_dep=x_dep
                                       )
-        loss = self.criterion(y_predicted, y_teacher)
-        self.log("val_loss", loss)
+
+        if self.variational_predictor:
+            y_student, mu, logvar = y_predicted
+            loss = loss_vae(y_teacher, y_student, mu, logvar)
+            self.log("train_loss", loss)
+        else:
+            loss = self.criterion(y_predicted, y_teacher)
+            self.log("train_loss", loss)
 
         return loss
 

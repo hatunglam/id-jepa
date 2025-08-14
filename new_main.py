@@ -3,6 +3,8 @@ from transformers.models.dinov2.modeling_dinov2 import Dinov2Model
 from transformers import Dinov2Config
 from transformers.models.bit.image_processing_bit import BitImageProcessor
 
+USE_VARIATIONAL_PREDICTOR = True
+
 pre_trained_img_model = AutoModel.from_pretrained(
     "facebook/dinov2-base",
     trust_remote_code=False,
@@ -91,6 +93,7 @@ if __name__ == "__main__":
         context_ratio_range=(0.85, 0.95),
         target_mask_range=(0.85, 0.95),
         freeze="depth",
+        variational_predictor=USE_VARIATIONAL_PREDICTOR,
         lr=LR,
         weight_decay=0.05
     )
