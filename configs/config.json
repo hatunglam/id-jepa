@@ -38,7 +38,7 @@
              "PERSISTENT_WORKERS": true,
              "PREFETCH_FACTOR": 2,
              "SEED": 42,
-             "MAX_EPOCHS": 200,
+             "MAX_EPOCHS": 100,
              "GRADIENT_CLIP_VAL": 0.1,
              "WEIGHT_DECAY": 0.05,
              "TARGET_ASPECT_RATIO": [0.75, 1.5],
@@ -58,7 +58,7 @@
         "tracking": 
             {"LOG_DIR": "lightning_logs",
              "LOGGING_INTERVAL": "step",
-             "TOK_K_CHECKPOINTS": 1,
+             "TOK_K_CHECKPOINTS": -1,
              "CHECKPOINT_DIR": "./checkpoints",
              "CHECKPOINT_MONITOR": "val_loss",
              "CHECKPOINT_MODE": "min",
