@@ -99,7 +99,7 @@ class JEPA_base(nn.Module):
         # Encode the Context input with a Pretrained VIT Depth(?) Encoder
         
         # with torch.no_grad():
-        depth_embeddings = self.depth_encoder(depth).last_hidden_state
+        depth_embeddings = self.depth_encoder(depth).feature_maps[-1]
 
         batch, n_target_patches, embed_dim = depth_embeddings.shape
 
