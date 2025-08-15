@@ -58,7 +58,7 @@
         "tracking": 
             {"LOG_DIR": "lightning_logs",
              "LOGGING_INTERVAL": "step",
-             "TOK_K_CHECKPOINTS": -1,
+             "TOK_K_CHECKPOINTS": 3,
              "CHECKPOINT_DIR": "./checkpoints",
              "CHECKPOINT_MONITOR": "val_loss",
              "CHECKPOINT_MODE": "min",
