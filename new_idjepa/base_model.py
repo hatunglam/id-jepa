@@ -18,7 +18,6 @@ class JEPA_base(nn.Module):
             mode="train",
             context_ratio_range=(0.85, 0.95),
             target_mask_range=(0.15, 0.25),
-            freeze="depth",
             variational_predictor = False,
             **kwargs
     ):
@@ -35,37 +34,35 @@ class JEPA_base(nn.Module):
         self.mask_token = nn.Parameter(torch.randn(1, 1, self.embed_dim))
         nn.init.trunc_normal_(self.mask_token, 0.02)
 
-        self.post_enc_norm = post_enc_norm
-        self.post_enc_norm_jepa = (
-            nn.LayerNorm(self.embed_dim) if self.post_enc_norm else nn.Identity()
-        )
+        # self.post_enc_norm = post_enc_norm
+        # self.post_enc_norm_jepa = (
+        #     nn.LayerNorm(self.embed_dim) if self.post_enc_norm else nn.Identity()
+        # )
         
         self.image_encoder = image_encoder
         self.depth_encoder = depth_encoder
 
-        if freeze == "depth":
-            for p in self.depth_encoder.parameters():
-                p.requires_grad = False # Freeze depth encoder
-        elif freeze == "image":
-            for p in self.image_encoder.parameters():
-                p.requires_grad = False # Freeze image encoder
-
+        for p in self.depth_encoder.parameters():
+            p.requires_grad = False # Freeze depth encoder
 
         # Initialize Predictor module
-        self.predictor = Predictor(
-            embed_dim=self.embed_dim,
-            num_heads=self.n_heads,
-            depth=decoder_depth,
-            predictor_embed_dim=predictor_embed_dim
+        if not variational_predictor:
+            print("Training With Default Predictor")
+            self.predictor = Predictor(
+                embed_dim=self.embed_dim,
+                num_heads=self.n_heads,
+                depth=decoder_depth,
+                predictor_embed_dim=predictor_embed_dim
+                )
+        else:
+            print("Training Using Variational Predictor")
+            self.vae_predictor = PredictorVAE(
+                embed_dim=self.embed_dim,
+                hidden_size=512,
+                z_dim=256,
+                num_heads=self.n_heads,
+                depth=decoder_depth,     
             )
-        
-        self.vae_predictor = PredictorVAE(
-            embed_dim=self.embed_dim,
-            hidden_size=512,
-            z_dim=256,
-            num_heads=self.n_heads,
-            depth=decoder_depth,     
-        )
 
     def forward_base(
             self,
@@ -100,8 +97,9 @@ class JEPA_base(nn.Module):
         # DEPTH:
         # -------------------------------------------------------
         # Encode the Context input with a Pretrained VIT Depth(?) Encoder
-        with torch.no_grad():
-            depth_embeddings = self.depth_encoder(depth).last_hidden_state
+        
+        # with torch.no_grad():
+        depth_embeddings = self.depth_encoder(depth).last_hidden_state
 
         batch, n_target_patches, embed_dim = depth_embeddings.shape
 
@@ -141,13 +139,11 @@ class JEPA_base(nn.Module):
 
         if self.variational_predictor:
             predictions = self.vae_predictor(context_encoding=context_encoding,
-                                                     target_masks=target_masks
-                                                     )            
+                                             target_masks=target_masks)            
 
         else:
             predictions = self.predictor(context_encoding=context_encoding,
-                                        target_masks=target_masks
-                                        )
+                                         target_masks=target_masks)
         
         return (predictions, target_blocks)
     
@@ -181,8 +177,6 @@ class JEPA_base(nn.Module):
         return torch.randint(
             low=min_num_samples, high=max_num_samples + 1, size=(1,)
         ).item()
-
-
 
     def create_fixed_mask(
         self,
@@ -227,7 +221,7 @@ class JEPA_base(nn.Module):
           mask[b, masked_indices] = True
 
       return mask
-
+    
     def create_target_masks_and_blocks(
         self,
         last_hidden_state: torch.Tensor,  # (B, T, D)
@@ -283,7 +277,7 @@ class JEPA_base(nn.Module):
             )  # (N_masked, D)
             target_blocks.append(last_hidden_state[b][masked_indices])  # (N_masked, D)
 
-        return torch.stack(target_masks), torch.stack(target_blocks)
+        return torch.stack(target_masks).cuda(), torch.stack(target_blocks).cuda()
 
     def sample_context_blocks(
         self,
@@ -324,13 +318,4 @@ class JEPA_base(nn.Module):
             ]  # shape: (num_context_blocks, D)
             context_blocks.append(blocks_b)
 
-        return torch.stack(context_blocks)  # shape: (B, num_context_blocks, D)
-
-
-
-
-
-
-
-
-
+        return torch.stack(context_blocks).cuda()  # shape: (B, num_context_blocks, D)

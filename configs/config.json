@@ -1,7 +1,10 @@
 {"image": 
     {
         "model": 
-            {"IMAGE_SIZE": [224,224],
+            {"USE_PRETRAINED_ENCODER": false,
+             "USE_VARIATIONAL_PREDICTOR": false,
+             "TEACHER_MODEL_TYPE": "DepthAnything",
+             "IMAGE_SIZE": [224,224],
              "PATCH_SIZE": 14,
              "NUM_FRAMES": 1,
              "IN_CHANS_RGB": 3,
@@ -12,10 +15,9 @@
             },
         "dataset": 
             {"DATA_DIR": "/home/ec2-user/data/data/",
-             "MAX_DEPTH": 1000.0,
-             "IMG_RESIZE": 240,
-             "RETURN_METRIC_DEPTH": false,
-             "APPLY_TRANSFORMS": true
+             "CROP_SIZE": [224, 224],
+             "TEACHER_MODEL": "DepthAnything",
+             "MAX_DEPTH": 1000.0
             },
         "profiling": 
             {"LOG_DIR": "./profiler_logs",
@@ -27,7 +29,7 @@
             "PREFETCH_FACTOR_OPTIONS": [1, 2, 4, 8, 16]
             },
         "experiment": 
-            {"MODEL_NAME": "id-jepa",
+            {"MODEL_NAME": "ID_JEPA",
              "MODEL_SIZE": "base",
              "LR": 1e-3,
              "BATCH_SIZE": 8,
@@ -40,7 +42,7 @@
              "GRADIENT_CLIP_VAL": 0.1,
              "WEIGHT_DECAY": 0.05,
              "TARGET_ASPECT_RATIO": [0.75, 1.5],
-             "TARGET_SCALE_INTERVAL": [0.15, 0.2],
+             "TARGET_SCALE": [0.85, 1.0],
              "CONTEXT_ASPECT_RATIO": 1.0,
              "CONTEXT_SCALE": [0.85, 1.0],
              "NUM_TARGET_BLOCKS": 4,

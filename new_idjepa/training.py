@@ -8,9 +8,7 @@ from .variational_predictor import loss_vae
 class IDJEPA(JEPA_base, pl.LightningModule):
     def __init__(self,
                  image_encoder,
-                 image_preprocessor,
                  depth_encoder,
-                 depth_preprocessor,
                  decoder_depth,
                  n_heads,
                  predictor_embed_dim,
@@ -18,28 +16,21 @@ class IDJEPA(JEPA_base, pl.LightningModule):
                  mode="train",
                  context_ratio_range=(0.85, 0.95),
                  target_mask_range=(0.15, 0.25),
-                 freeze="depth",
                  variational_predictor=False,
                  lr=1e-3,
                  weight_decay=0.05):
-        
         pl.LightningModule.__init__(self)
         JEPA_base.__init__(self,
-            image_encoder=image_encoder,
-            depth_encoder=depth_encoder,
-            decoder_depth=decoder_depth,
-            n_heads=n_heads,
-            predictor_embed_dim=predictor_embed_dim,
-            post_enc_norm=post_enc_norm,
-            mode=mode,
-            context_ratio_range=context_ratio_range,
-            target_mask_range=target_mask_range,
-            freeze=freeze,
-            variational_predictor=variational_predictor
-            )
-
-        self.image_preprocessor = image_preprocessor
-        self.depth_preprocessor = depth_preprocessor
+                           image_encoder=image_encoder,
+                           depth_encoder=depth_encoder,
+                           decoder_depth=decoder_depth,
+                           n_heads=n_heads,
+                           predictor_embed_dim=predictor_embed_dim,
+                           post_enc_norm=post_enc_norm,
+                           mode=mode,
+                           context_ratio_range=context_ratio_range,
+                           target_mask_range=target_mask_range,
+                           variational_predictor=variational_predictor)
 
         self.lr = lr 
         self.weight_decay = weight_decay
@@ -57,16 +48,10 @@ class IDJEPA(JEPA_base, pl.LightningModule):
                       batch_idx
                       ):
         self.mode = "train"
-        x_img, x_dep = batch["image"], batch["depth"]
-
-        x_img = self.image_preprocessor(x_img)
-        x_dep = self.depth_preprocessor(x_dep)
-        x_img = x_img.to(self.device)
-        x_dep = x_dep.to(self.device)
+        x_img, x_dep = batch["student_input"].to(self.device), batch["teacher_input"].to(self.device)
 
         y_predicted, y_teacher = self(x_img=x_img,
-                                      x_dep=x_dep
-                                      )
+                                      x_dep=x_dep)
         
         if self.variational_predictor:
             y_student, mu, logvar = y_predicted
@@ -83,16 +68,10 @@ class IDJEPA(JEPA_base, pl.LightningModule):
                       batch_idx
                       ):
         self.mode = "train"
-        x_img, x_dep = batch["image"], batch["depth"]
-
-        x_img = self.image_preprocessor(x_img)
-        x_dep = self.depth_preprocessor(x_dep)
-        x_img = x_img.to(self.device)
-        x_dep = x_dep.to(self.device)
+        x_img, x_dep = batch["student_input"].to(self.device), batch["teacher_input"].to(self.device)
 
         y_predicted, y_teacher = self(x_img=x_img,
-                                      x_dep=x_dep
-                                      )
+                                      x_dep=x_dep)
 
         if self.variational_predictor:
             y_student, mu, logvar = y_predicted
@@ -109,10 +88,8 @@ class IDJEPA(JEPA_base, pl.LightningModule):
                       batch_idx
                       ):
         self.mode = "test"
-        x_img, x_dep = batch["image"], batch["depth"]
-
-        x_img = self.image_preprocessor(x_img)
-        x_dep = self.depth_preprocessor(x_dep)
+        x_img, x_dep = batch["student_input"].to(self.device), batch["teacher_input"].to(self.device)
+        
         x_img = x_img.to(self.device)
         x_dep = x_dep.to(self.device)
                 

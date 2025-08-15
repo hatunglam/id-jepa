@@ -14,22 +14,19 @@ class RGBDDataModule(pl.LightningDataModule):
 
         self.train_dataset = NYUDataset(data_dir=self.dataset_config["DATA_DIR"],
                                         mode="train",
-                                        max_depth=self.dataset_config["MAX_DEPTH"],
-                                        img_resize=self.dataset_config["IMG_RESIZE"],
-                                        return_metric_depth=self.dataset_config["RETURN_METRIC_DEPTH"],
-                                        apply_transforms=self.dataset_config["APPLY_TRANSFORMS"])
+                                        crop_size=self.dataset_config["CROP_SIZE"],
+                                        teacher_model=self.dataset_config["TEACHER_MODEL"],
+                                        max_depth=self.dataset_config["MAX_DEPTH"],)
         self.val_dataset = NYUDataset(data_dir=self.dataset_config["DATA_DIR"],
                                       mode="test",
-                                      max_depth=self.dataset_config["MAX_DEPTH"],
-                                      img_resize=False,
-                                      return_metric_depth=self.dataset_config["RETURN_METRIC_DEPTH"],
-                                      apply_transforms=False)
+                                      crop_size=self.dataset_config["CROP_SIZE"],
+                                      teacher_model=self.dataset_config["TEACHER_MODEL"],
+                                      max_depth=self.dataset_config["MAX_DEPTH"],)
         self.test_dataset = NYUDataset(data_dir=self.dataset_config["DATA_DIR"],
                                        mode="test",
-                                       max_depth=self.dataset_config["MAX_DEPTH"],
-                                       img_resize=False,
-                                       return_metric_depth=self.dataset_config["RETURN_METRIC_DEPTH"],
-                                       apply_transforms=False)
+                                       crop_size=self.dataset_config["CROP_SIZE"],
+                                       teacher_model=self.dataset_config["TEACHER_MODEL"],
+                                       max_depth=self.dataset_config["MAX_DEPTH"],)
 
     def train_dataloader(self):
         return DataLoader(self.train_dataset,

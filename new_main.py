@@ -1,55 +1,7 @@
-from transformers import AutoModel, AutoImageProcessor
+from transformers import AutoModel
 from transformers.models.dinov2.modeling_dinov2 import Dinov2Model
-from transformers import Dinov2Config
-from transformers.models.bit.image_processing_bit import BitImageProcessor
-
-USE_VARIATIONAL_PREDICTOR = True
-if USE_VARIATIONAL_PREDICTOR:
-    print("Training Using Variational Predictor")
-else:
-    print("Training With Default Predictor")
-
-pre_trained_img_model = AutoModel.from_pretrained(
-    "facebook/dinov2-base",
-    trust_remote_code=False,
-)
-
-config = pre_trained_img_model.config
-img_model = Dinov2Model(config)
-
-img_feature_extractor: BitImageProcessor = AutoImageProcessor.from_pretrained(
-    "facebook/dinov2-base"
-)
-
-depth_feature_extractor: BitImageProcessor = AutoImageProcessor.from_pretrained(
-"facebook/dinov2-base"
-)
-
-img_feature_extractor.do_rescale = False
-img_feature_extractor.do_center_crop = True
-img_feature_extractor.do_resize = False
-img_feature_extractor.do_normalize = True
-img_feature_extractor.do_convert_rgb = True 
-
-def image_preprocessor(image):
-    processed_img = img_feature_extractor(images=image, return_tensors="pt")
-    return processed_img["pixel_values"]
-
-depth_feature_extractor.do_rescale = False
-depth_feature_extractor.do_center_crop = True
-depth_feature_extractor.do_resize = False
-depth_feature_extractor.do_normalize = False
-depth_feature_extractor.do_convert_rgb = False
-depth_feature_extractor.image_std = [1, 1, 1]
-depth_feature_extractor.image_mean = [0, 0, 0]
-
-def depth_preprocessor(depth):
-    processed_depth = depth_feature_extractor(images=depth, return_tensors="pt")
-    depth_tensor = processed_depth["pixel_values"]
-    depth_tensor = depth_tensor.repeat(1, 3, 1, 1)
-    return depth_tensor
-
-
+from transformers import AutoConfig
+from transformers import AutoModelForDepthEstimation
 from new_idjepa.training import IDJEPA
 from dataset.datamodule import RGBDDataModule
 import gc
@@ -69,7 +21,6 @@ if __name__ == "__main__":
     tracking_config = get_image_tracking_config()
     model_config = get_image_model_config()
     dataset_config = get_image_dataset_config()
-    # model_config["IMAGE_SIZE"] = tuple(model_config["IMAGE_SIZE"])
     
     MODEL_NAME = experiment_config["MODEL_NAME"]
     MODEL_SIZE = experiment_config["MODEL_SIZE"]
@@ -79,28 +30,41 @@ if __name__ == "__main__":
     CHECKPOINT_DIR = tracking_config["CHECKPOINT_DIR"]
 
     torch.set_float32_matmul_precision(runtime_config["FLOAT32_MATMUL_PRECISION"])
-
     pl.seed_everything(SEED)
 
     model_id = f"{MODEL_SIZE}_{SEED}_{LR:.1e}-{MAX_EPOCHS}"
 
-    jepa_model = IDJEPA(
-        image_encoder=img_model,
-        image_preprocessor=image_preprocessor,
-        depth_encoder=pre_trained_img_model,
-        depth_preprocessor=depth_preprocessor,
-        decoder_depth=6,
-        n_heads=8,
-        predictor_embed_dim=768,
-        post_enc_norm=False,
-        mode="train",
-        context_ratio_range=(0.85, 0.95),
-        target_mask_range=(0.85, 0.95),
-        freeze="depth",
-        variational_predictor=USE_VARIATIONAL_PREDICTOR,
-        lr=LR,
-        weight_decay=0.05
-    )
+    if model_config["USE_PRETRAINED_ENCODER"]:
+        print("Using Pretrained DINOv2 as student ...")
+        image_encoder = AutoModel.from_pretrained("facebook/dinov2-base",
+                                                  trust_remote_code=False,)
+    else:
+        print("Using Non-Pretrained DINOv2 as student ...")
+        config = AutoConfig.from_pretrained("facebook/dinov2-base",
+                                            trust_remote_code=False,)
+        image_encoder = Dinov2Model(config)
+    
+    if model_config["TEACHER_MODEL_TYPE"].lower() == "depthanything":
+        print("Using DepthAnything as Teacher...")
+        depth_encoder = AutoModelForDepthEstimation.from_pretrained("depth-anything/Depth-Anything-V2-Base-hf").backbone
+    else:
+        print("Using DINOv2 as Teacher...")
+        depth_encoder = AutoModel.from_pretrained("facebook/dinov2-base",
+                                                  trust_remote_code=False,)
+    depth_encoder = depth_encoder.eval()
+
+    jepa_model = IDJEPA(image_encoder=image_encoder,
+                        depth_encoder=depth_encoder,
+                        decoder_depth=8,
+                        n_heads=12,
+                        predictor_embed_dim=384,
+                        post_enc_norm=False,
+                        mode="train",
+                        context_ratio_range=experiment_config["CONTEXT_SCALE"],
+                        target_mask_range=experiment_config["TARGET_SCALE"],
+                        variational_predictor=model_config["USE_VARIATIONAL_PREDICTOR"],
+                        lr=LR,
+                        weight_decay=0.05)
 
     datamodule = RGBDDataModule(dataset_config, experiment_config)
     print("RGBD datamodule loaded")
