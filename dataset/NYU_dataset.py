@@ -108,6 +108,8 @@ if __name__ == "__main__":
     for batch in dataloader:
         student_input = batch['student_input']
         teacher_input = batch['teacher_input']
+        print(f"Student input shape: {student_input.shape}")
+        print(f"Teacher input shape: {teacher_input.shape}")
         student_input = student_input.squeeze().permute(1,2,0)
         teacher_input = teacher_input.squeeze().permute(1,2,0)
         import matplotlib.pyplot as plt
