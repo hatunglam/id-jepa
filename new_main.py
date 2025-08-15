@@ -25,25 +25,25 @@ depth_feature_extractor: BitImageProcessor = AutoImageProcessor.from_pretrained(
 "facebook/dinov2-base"
 )
 
-def image_preprocessor(image):
+img_feature_extractor.do_rescale = False
+img_feature_extractor.do_center_crop = True
+img_feature_extractor.do_resize = False
+img_feature_extractor.do_normalize = True
+img_feature_extractor.do_convert_rgb = True 
 
-    img_feature_extractor.do_rescale = False
-    img_feature_extractor.do_center_crop = True
-    img_feature_extractor.do_resize = False
-    img_feature_extractor.do_normalize = False
-    img_feature_extractor.do_convert_rgb = False
+def image_preprocessor(image):
     processed_img = img_feature_extractor(images=image, return_tensors="pt")
     return processed_img["pixel_values"]
 
-def depth_preprocessor(depth):
+depth_feature_extractor.do_rescale = False
+depth_feature_extractor.do_center_crop = True
+depth_feature_extractor.do_resize = False
+depth_feature_extractor.do_normalize = False
+depth_feature_extractor.do_convert_rgb = False
+depth_feature_extractor.image_std = [1, 1, 1]
+depth_feature_extractor.image_mean = [0, 0, 0]
 
-    depth_feature_extractor.do_rescale = False
-    depth_feature_extractor.do_center_crop = True
-    depth_feature_extractor.do_resize = False
-    depth_feature_extractor.do_normalize = False
-    depth_feature_extractor.do_convert_rgb = False
-    depth_feature_extractor.image_std = [1, 1, 1]
-    depth_feature_extractor.image_mean = [0, 0, 0]
+def depth_preprocessor(depth):
     processed_depth = depth_feature_extractor(images=depth, return_tensors="pt")
     depth_tensor = processed_depth["pixel_values"]
     depth_tensor = depth_tensor.repeat(1, 3, 1, 1)
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     tracking_config = get_image_tracking_config()
     model_config = get_image_model_config()
     dataset_config = get_image_dataset_config()
-    model_config["IMAGE_SIZE"] = tuple(model_config["IMAGE_SIZE"])
+    # model_config["IMAGE_SIZE"] = tuple(model_config["IMAGE_SIZE"])
     
     MODEL_NAME = experiment_config["MODEL_NAME"]
     MODEL_SIZE = experiment_config["MODEL_SIZE"]

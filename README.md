@@ -21,3 +21,5 @@
 3- Copy teacher exactly from student, do not stack depth but use gray scale images.
 
 gdown --id 1WoOZOBpOWfmwe7bknWS5PMUCLBPFKTOw
+
+run tensorbaord: tensorboard --logdir lightning_logs --port 6006 --host 0.0.0.0

@@ -1,8 +1,8 @@
 {"image": 
     {
         "model": 
-            {"IMAGE_SIZE": [240,320],
-             "PATCH_SIZE": 16,
+            {"IMAGE_SIZE": [224,224],
+             "PATCH_SIZE": 14,
              "NUM_FRAMES": 1,
              "IN_CHANS_RGB": 3,
              "IN_CHANS_DEPTH": 3,
@@ -36,7 +36,7 @@
              "PERSISTENT_WORKERS": true,
              "PREFETCH_FACTOR": 2,
              "SEED": 42,
-             "MAX_EPOCHS": 15,
+             "MAX_EPOCHS": 200,
              "GRADIENT_CLIP_VAL": 0.1,
              "WEIGHT_DECAY": 0.05,
              "TARGET_ASPECT_RATIO": [0.75, 1.5],

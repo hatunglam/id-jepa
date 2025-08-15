@@ -63,19 +63,21 @@ class NYUDataset(Dataset):
             if self.apply_transforms:
                 transformed = self.spatial_transforms(image=image, mask=depth)
                 image, depth = transformed['image'], transformed['mask']
-                image = self.image_only_transforms(image=image)['image']
-        
+                # image = self.image_only_transforms(image=image)['image']
+
+        image = torch.as_tensor(image, dtype=torch.float32).permute(2,0,1)
+
         if self.mode == 'test':
             depth = np.asarray(Image.open(depth), dtype=np.float32).copy().astype(float) / 10.0 # 0.0 to 1000 cm    
         
-        image = np.clip(image / 255., 0.0, 1.0)
+        # image = np.clip(image / 255., 0.0, 1.0)
         depth = depth / self.max_depth # 0.0 to 1 (Normalized)
 
-        if self.img_resize:
-            image = self.nyu_resize(image, self.img_resize)
-            depth = self.nyu_resize(depth, self.img_resize)
+        # if self.img_resize:
+        #     image = self.nyu_resize(image, self.img_resize)
+        #     depth = self.nyu_resize(depth, self.img_resize)
 
-        data = {'image': torch.as_tensor(image, dtype=torch.float32).permute(2,0,1),
+        data = {'image': image,
                 'depth': torch.as_tensor(depth, dtype=torch.float32).unsqueeze(0)}
         if self.return_metric_depth:
             metric_depth = depth * 10.0 # 0.0 to 10.0 m
