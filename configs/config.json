@@ -42,7 +42,7 @@
              "GRADIENT_CLIP_VAL": 0.1,
              "WEIGHT_DECAY": 0.05,
              "TARGET_ASPECT_RATIO": [0.75, 1.5],
-             "TARGET_SCALE": [0.85, 1.0],
+             "TARGET_SCALE": [0.60, 0.85],
              "CONTEXT_ASPECT_RATIO": 1.0,
              "CONTEXT_SCALE": [0.85, 1.0],
              "NUM_TARGET_BLOCKS": 4,

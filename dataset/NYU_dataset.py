@@ -119,9 +119,9 @@ if __name__ == "__main__":
         axs[0].set_title("student_input")
         axs[0].axis("off")
         
-        axs[0].imshow(teacher_input)
-        axs[0].set_title("teacher_input")
-        axs[0].axis("off")
+        axs[1].imshow(teacher_input)
+        axs[1].set_title("teacher_input")
+        axs[1].axis("off")
 
         plt.tight_layout()
         plt.savefig("nyu_sample.png", dpi=300)
