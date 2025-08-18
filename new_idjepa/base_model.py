@@ -27,17 +27,12 @@ class JEPA_base(nn.Module):
         self.mode = mode.lower()
         self.context_ratio_range = context_ratio_range
         self.target_mask_range = target_mask_range
-        self.embed_dim = image_encoder.config.hidden_size # Need edit
+        self.embed_dim = image_encoder.config.hidden_size
         assert self.embed_dim == image_encoder.config.hidden_size
         self.variational_predictor = variational_predictor
 
         self.mask_token = nn.Parameter(torch.randn(1, 1, self.embed_dim))
         nn.init.trunc_normal_(self.mask_token, 0.02)
-
-        # self.post_enc_norm = post_enc_norm
-        # self.post_enc_norm_jepa = (
-        #     nn.LayerNorm(self.embed_dim) if self.post_enc_norm else nn.Identity()
-        # )
         
         self.image_encoder = image_encoder
         self.depth_encoder = depth_encoder
@@ -290,7 +285,7 @@ class JEPA_base(nn.Module):
 
         Parameters
         ----------
-        depth_embeddings : torch.Tensor
+        image_embeddings : torch.Tensor
             Input embeddings of shape (B, T, D)
         num_context_blocks : int
             Number of blocks to sample per sample
