@@ -67,7 +67,7 @@ class IDJEPA(JEPA_base, pl.LightningModule):
                       batch,
                       batch_idx
                       ):
-        self.mode = "train"
+        self.mode = "test"
         x_img, x_dep = batch["student_input"].to(self.device), batch["teacher_input"].to(self.device)
 
         y_predicted, y_teacher = self(x_img=x_img,

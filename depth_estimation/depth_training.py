@@ -3,6 +3,7 @@ import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 from .depth_estimator import DepthEstimatorBase
+import torch.nn.functional as F
 
 # def silog_loss(pred, target, mask=None, eps=1e-6):
 #     pred = pred.squeeze(1)
@@ -54,22 +55,28 @@ class DepthEstimator(DepthEstimatorBase, pl.LightningModule):
         return self.forward_base(pixel_value)
         
     def training_step(self, batch, batch_idx):
-        x_img, x_dep = batch["student_input"].to(self.device), batch["teacher_input"].to(self.device)
+        x_img, x_dep = batch["image_input"].to(self.device), batch["depth_input"].to(self.device)
         pred_depth = self(x_img)
+        if pred_depth.shape[-2:] != x_dep.shape[-2:]:
+            x_dep = F.interpolate(x_dep.unsqueeze(1) if len(x_dep.shape)==3 else x_dep, 
+                                size=pred_depth.shape[-2:], mode='nearest').squeeze(1) if len(pred_depth.shape)==3 else x_dep
         loss = si_log_loss(pred_depth, x_dep)
         self.log("train_loss", loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
-        x_img, x_dep = batch["student_input"].to(self.device), batch["teacher_input"].to(self.device)
+        x_img, x_dep = batch["image_input"].to(self.device), batch["depth_input"].to(self.device)
         pred_depth = self(x_img)
+        if pred_depth.shape[-2:] != x_dep.shape[-2:]:
+            x_dep = F.interpolate(x_dep.unsqueeze(1) if len(x_dep.shape)==3 else x_dep, 
+                                size=pred_depth.shape[-2:], mode='nearest').squeeze(1) if len(pred_depth.shape)==3 else x_dep
         loss = si_log_loss(pred_depth, x_dep)
         self.log("val_loss", loss)
         return loss
     
     def predict_step(self, batch, batch_idx):
-        x_img = batch["student_input"].to(self.device)
-        pred_depth = self(x_img)  # self.forward() is called here
+        x_img = batch["image_input"].to(self.device)
+        pred_depth = self(x_img) 
         return pred_depth
 
     def configure_optimizers(self):

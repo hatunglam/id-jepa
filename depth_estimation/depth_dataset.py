@@ -10,20 +10,27 @@ class DepthDataset(Dataset):
     def __init__(self,
                  data_dir: str, 
                  mode: str,
+                 encoder_mode="depthanything-dpt",
                  crop_size=224,
                  max_depth=1000.0):
         self.data_dir = data_dir
         self.mode = mode
         self.max_depth = max_depth
         self.crop_size = crop_size
+        self.encoder_mode = encoder_mode.lower()
 
-        # image processor 
-        self.image_processor = AutoImageProcessor.from_pretrained("facebook/dinov2-base")
-        self.image_processor.do_center_crop = True
-        self.image_processor.crop_size = {'height': crop_size[0], 'width': crop_size[1]}
-        self.image_processor.do_resize = False
+        if self.encoder_mode == "dino-dpt":
+            # image processor when using dino-dpt
+            self.image_processor = AutoImageProcessor.from_pretrained("facebook/dinov2-base")
+            self.image_processor.do_center_crop = True
+            self.image_processor.crop_size = {'height': crop_size[0], 'width': crop_size[1]}
+            self.image_processor.do_resize = False
+        elif self.encoder_mode == "depthanything-dpt":
+            # image processor when using depthanything-dpt
+            self.image_processor = AutoImageProcessor.from_pretrained("depth-anything/Depth-Anything-V2-Base-hf")
+            self.image_processor.do_resize = False
 
-        # depth image processor
+        # depth image processor 
         self.depth_processor = AutoImageProcessor.from_pretrained("facebook/dinov2-base")
         self.depth_processor.do_center_crop = True
         if isinstance(crop_size, int): crop_size = (crop_size, crop_size)

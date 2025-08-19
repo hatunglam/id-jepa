@@ -2,7 +2,7 @@ from transformers import AutoModel
 from transformers.models.dinov2.modeling_dinov2 import Dinov2Model
 from transformers import AutoConfig
 from transformers import AutoModelForDepthEstimation
-from depth_estimation.depth_estimator import init_encoder
+from depth_estimation.init_encoder import init_model_encoder
 from depth_estimation.depth_datamodule import DepthDataModule
 from depth_estimation.depth_training import DepthEstimator
 import gc
@@ -15,6 +15,11 @@ from configs import (get_image_experiment_config,
                      get_image_tracking_config,
                      get_image_model_config,
                      get_image_dataset_config,)
+
+########EDIT_ENCODER############################
+encoder_list = ["dino-dpt", "depthanything-dpt"]
+encoder = encoder_list[0]
+################################################
 
 if __name__ == "__main__":
     experiment_config = get_image_experiment_config()
@@ -35,14 +40,14 @@ if __name__ == "__main__":
 
     model_id = "Depth_estimator"
 
-    image_encoder, depth_estimator = init_encoder(use_checkpoint=True)
+    image_encoder, depth_estimator = init_model_encoder(config=encoder)
     
     model = DepthEstimator(image_encoder=image_encoder,
                            depth_estimator=depth_estimator,
                            lr=LR,)
     
-    
-    datamodule = DepthDataModule(dataset_config, experiment_config)
+    datamodule = DepthDataModule(dataset_config, experiment_config,
+                                 encoder_mode=encoder)
 
     # Callbacks
     checkpoint_callback = ModelCheckpoint(dirpath="./depth_estimator_checkpoints",

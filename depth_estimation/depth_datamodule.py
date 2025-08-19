@@ -5,28 +5,30 @@ from .depth_dataset import DepthDataset
 class DepthDataModule(pl.LightningDataModule):
     def __init__(self,
                  dataset_config: dict,
-                 experiment_config: dict):
+                 experiment_config: dict,
+                 encoder_mode="depthanything-dpt"):
         super().__init__()
         self.dataset_config = dataset_config
         self.experiment_config = experiment_config
+        self.encoder_mode = encoder_mode
 
     def setup(self, stage=None):
 
         self.train_dataset = DepthDataset(data_dir=self.dataset_config["DATA_DIR"],
                                         mode="train",
                                         crop_size=self.dataset_config["CROP_SIZE"],
-                                        teacher_model=self.dataset_config["TEACHER_MODEL"],
+                                        encoder_mode=self.encoder_mode,
                                         max_depth=self.dataset_config["MAX_DEPTH"],)
         self.val_dataset = DepthDataset(data_dir=self.dataset_config["DATA_DIR"],
-                                      mode="test",
-                                      crop_size=self.dataset_config["CROP_SIZE"],
-                                      teacher_model=self.dataset_config["TEACHER_MODEL"],
-                                      max_depth=self.dataset_config["MAX_DEPTH"],)
+                                        mode="test",
+                                        crop_size=self.dataset_config["CROP_SIZE"],
+                                        encoder_mode=self.encoder_mode,
+                                        max_depth=self.dataset_config["MAX_DEPTH"],)
         self.test_dataset = DepthDataset(data_dir=self.dataset_config["DATA_DIR"],
-                                       mode="test",
-                                       crop_size=self.dataset_config["CROP_SIZE"],
-                                       teacher_model=self.dataset_config["TEACHER_MODEL"],
-                                       max_depth=self.dataset_config["MAX_DEPTH"],)
+                                        mode="test",
+                                        crop_size=self.dataset_config["CROP_SIZE"],
+                                        encoder_mode=self.encoder_mode,
+                                        max_depth=self.dataset_config["MAX_DEPTH"],)
 
     def train_dataloader(self):
         return DataLoader(self.train_dataset,
