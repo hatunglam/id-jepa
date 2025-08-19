@@ -71,8 +71,11 @@ class DepthEstimator(DepthEstimatorBase, pl.LightningModule):
         x_img, x_dep = batch["image_input"].to(self.device), batch["depth_input"].to(self.device)
         pred_depth = self(x_img)
         if pred_depth.shape[-2:] != x_dep.shape[-2:]:
-            x_dep = F.interpolate(x_dep.unsqueeze(1) if len(x_dep.shape)==3 else x_dep, 
-                                size=pred_depth.shape[-2:], mode='nearest').squeeze(1) if len(pred_depth.shape)==3 else x_dep
+            pred_depth = post_process_depth_estimation(
+                outputs=pred_depth,
+                target_sizes=[tuple(x_img.shape[-2:])] * x_img.shape[0],
+            )
+            
         loss = si_log_loss(pred_depth, x_dep)
         self.log("val_loss", loss)
         return loss
