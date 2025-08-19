@@ -13,11 +13,6 @@ def init_encoder(use_checkpoint=True):
         # Load into a Dino model
         img_encoder = Dinov2Model.from_pretrained("facebook/dinov2-base", trust_remote_code=False)
         img_encoder.load_state_dict(weights, strict=False)
-
-        # Freeze model params
-        img_encoder.eval()
-        for param in img_encoder.parameters():
-            param.requires_grad = False
     else:
         img_encoder = AutoModel.from_pretrained("facebook/dinov2-base",
                                             trust_remote_code=False)
@@ -34,15 +29,15 @@ class DepthEstimator(nn.Module):
         super().__init__()
         self.image_encoder = image_encoder
         self.depth_estimator = depth_estimator
-        self.output_attention = False
-        self.output_hidden_state = False
+        self.output_attentions = False
+        self.output_hidden_states = True
 
     def forward(self, pixel_values):
         output = self.image_encoder(pixel_values,
-                                    output_hidden_states=self.output_hidden_state,
-                                    output_attention=self.output_attention)
+                                    output_hidden_states=self.output_hidden_states,
+                                    output_attentions=self.output_attentions)
         
-        num_neck_hidden_state = len(self.depth_estimator.config.neck_hidden_size)
+        num_neck_hidden_state = len(self.depth_estimator.config.neck_hidden_sizes)
         hidden_states = output.hidden_states[-num_neck_hidden_state:]
 
         patch_height, patch_width = None, None
@@ -76,17 +71,16 @@ if __name__ == "__main__":
     with torch.no_grad():
         predicted_depth = model(pixel_values)
 
-    resized_depth = torch.nn.functional.interpolate(
-        predicted_depth.unsqueeze(1),
-        size=image.size[::-1],
-        mode="bicubic",
-        align_corners=False
-    ).squeeze().cpu().numpy()
+    prediction = torch.nn.functional.interpolate(
+    predicted_depth.unsqueeze(1),  # (B, 1, H, W)
+    size=image.size[::-1],         # (H, W)
+    mode="bicubic",
+    align_corners=False)
 
-    depth_normalized = (resized_depth * 255 / np.max(resized_depth)).astype("uint8")
+    # Convert to displayable image
+    output = prediction.squeeze().cpu().detach().numpy()
+    formatted = (output * 255 / np.max(output)).astype("uint8")
+    depth = Image.fromarray(formatted)
 
-    plt.imshow(depth_normalized, cmap="inferno")
-    plt.title("Predicted Depth Map")
-    plt.axis("off")
-    plt.tight_layout()
-    plt.show()
+    # Display
+    depth.save("depth_output.png") 
