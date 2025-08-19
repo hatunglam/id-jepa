@@ -45,7 +45,7 @@ if __name__ == "__main__":
     datamodule = DepthDataModule(dataset_config, experiment_config)
 
     # Callbacks
-    checkpoint_callback = ModelCheckpoint(dirpath=CHECKPOINT_DIR,
+    checkpoint_callback = ModelCheckpoint(dirpath="./depth_estimator_checkpoints",
                                           filename=MODEL_NAME,
                                           monitor=tracking_config["CHECKPOINT_MONITOR"],
                                           mode=tracking_config["CHECKPOINT_MODE"],
