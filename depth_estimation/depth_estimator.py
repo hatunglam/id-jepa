@@ -25,7 +25,7 @@ def init_DINO_encoder(checkpoint_path: str | None = "checkpoints/ID_JEPA_base_42
         depth_estimator = DPTForDepthEstimation.from_pretrained("Intel/dpt-beit-base-384")
     else:
         depth_estimator_config = AutoConfig.from_pretrained("Intel/dpt-beit-base-384")
-        depht_estimator = AutoModel.from_config(depth_estimator_config)
+        depth_estimator = AutoModel.from_config(depth_estimator_config)
 
     return img_encoder, depth_estimator
 
@@ -36,7 +36,7 @@ def init_DepthAnything_encoder(use_pretrained_depth_head: bool = False):
         depth_estimator = DPTForDepthEstimation.from_pretrained("Intel/dpt-beit-base-384")
     else:
         depth_estimator_config = AutoConfig.from_pretrained("Intel/dpt-beit-base-384")
-        depht_estimator = AutoModel.from_config(depth_estimator_config)
+        depth_estimator = AutoModel.from_config(depth_estimator_config)
 
     return img_encoder, depth_estimator
 
