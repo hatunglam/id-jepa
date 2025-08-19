@@ -171,3 +171,20 @@ cython_debug/
 .pypirc
 
 /data
+
+# Ignore virtual environments
+venv310/
+
+# Ignore checkpoints and logs
+checkpoints/
+archive_checkpoints/
+archive_model/
+lightning_logs/
+
+# Ignore datasets and archives
+*.zip
+data/
+data.zip
+
+# Ignore environment scripts if you prefer
+env.sh
