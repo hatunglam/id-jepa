@@ -58,8 +58,11 @@ class DepthEstimator(DepthEstimatorBase, pl.LightningModule):
         x_img, x_dep = batch["image_input"].to(self.device), batch["depth_input"].to(self.device)
         pred_depth = self(x_img)
         if pred_depth.shape[-2:] != x_dep.shape[-2:]:
-            x_dep = F.interpolate(x_dep.unsqueeze(1) if len(x_dep.shape)==3 else x_dep, 
-                                size=pred_depth.shape[-2:], mode='nearest').squeeze(1) if len(pred_depth.shape)==3 else x_dep
+            pred_depth = post_process_depth_estimation(
+                outputs=pred_depth,
+                target_sizes=[tuple(x_img.shape[-2:])] * x_img.shape[0],
+            )
+            
         loss = si_log_loss(pred_depth, x_dep)
         self.log("train_loss", loss)
         return loss
@@ -95,3 +98,43 @@ class DepthEstimator(DepthEstimatorBase, pl.LightningModule):
             },
         }
 
+def post_process_depth_estimation(
+    outputs: "DepthEstimatorOutput",
+    target_sizes: Optional[Union[torch.Tensor, list[tuple[int, int]], None]] = None,
+) -> list[dict[str, torch.Tensor]]:
+    """
+    https://github.com/huggingface/transformers/blob/main/src/transformers/models/dpt/image_processing_dpt.py#L637
+    
+    Converts the raw output of [`DepthEstimatorOutput`] into final depth predictions and depth PIL images.
+    Only supports PyTorch.
+
+    Args:
+        outputs ([`DepthEstimatorOutput`]):
+            Raw outputs of the model.
+        target_sizes (`torch.Tensor` or `list[tuple[int, int]]`, *optional*):
+            Tensor of shape `(batch_size, 2)` or list of tuples (`tuple[int, int]`) containing the target size
+            (height, width) of each image in the batch. If left to None, predictions will not be resized.
+
+    Returns:
+        `list[dict[str, torch.Tensor]]`: A list of dictionaries of tensors representing the processed depth
+        predictions.
+    """
+
+    predicted_depth = outputs.predicted_depth
+
+    if (target_sizes is not None) and (len(predicted_depth) != len(target_sizes)):
+        raise ValueError(
+            "Make sure that you pass in as many target sizes as the batch dimension of the predicted depth"
+        )
+
+    results = []
+    target_sizes = [None] * len(predicted_depth) if target_sizes is None else target_sizes
+    for depth, target_size in zip(predicted_depth, target_sizes):
+        if target_size is not None:
+            depth = torch.nn.functional.interpolate(
+                depth.unsqueeze(0).unsqueeze(1), size=target_size, mode="bicubic", align_corners=False
+            ).squeeze()
+
+        results.append({"predicted_depth": depth})
+
+    return results
