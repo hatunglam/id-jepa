@@ -4,17 +4,74 @@ import torch
 import torch.nn as nn
 from .depth_estimator import DepthEstimatorBase
 
+def silog_loss(pred, target, mask=None, eps=1e-6):
+    pred = pred.squeeze(1)
+    target = target.squeeze(1)
+
+    if mask is None:
+        mask = (target > 0).float()
+    else:
+        mask = mask.squeeze(1)
+
+    log_diff = torch.log(pred + eps) - torch.log(target + eps)
+    log_diff = log_diff * mask
+
+    n_valid = mask.sum()
+    silog1 = (log_diff ** 2).sum() / n_valid
+    silog2 = (log_diff.sum() ** 2) / (n_valid ** 2)
+
+    return silog1 - 0.85 * silog2
+
 class DepthEstimator(DepthEstimatorBase, pl.LightningModule):
     def __init__(self,
                  image_encoder,
-                 depth_estimator):
+                 depth_estimator,
+                 lr=1e-4,
+                 weight_decay=1e-5):
         pl.LightningModule.__init__(self)
         DepthEstimatorBase.__init__(self,
                                     image_encoder=image_encoder,
                                     depth_estimator=depth_estimator)
+
+        self.lr = lr
+        self.weight_decay = weight_decay
+        self.save_hyperparameters()
         
     def forward(self, pixel_value):
         return self.forward_base(pixel_value)
         
     def training_step(self, batch, batch_idx):
-        pass
+        x_img, x_dep = batch["student_input"].to(self.device), batch["teacher_input"].to(self.device)
+        pred_depth = self(x_img)
+        loss = silog_loss(pred_depth, x_dep)
+        self.log("train_loss", loss)
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        x_img, x_dep = batch["student_input"].to(self.device), batch["teacher_input"].to(self.device)
+        pred_depth = self(x_img)
+        loss = silog_loss(pred_depth, x_dep)
+        self.log("val_loss", loss)
+        return loss
+    
+    def predict_step(self, batch, batch_idx):
+        x_img = batch["student_input"].to(self.device)
+        pred_depth = self(x_img)  # self.forward() is called here
+        return pred_depth
+
+    def configure_optimizers(self):
+        optimizer = torch.optim.AdamW(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        scheduler = torch.optim.lr_scheduler.OneCycleLR(
+            optimizer,
+            max_lr=self.lr,
+            total_steps=self.trainer.estimated_stepping_batches,
+        )
+
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "interval": "step",
+            },
+        }
+
