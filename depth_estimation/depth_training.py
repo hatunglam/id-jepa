@@ -4,23 +4,23 @@ import torch
 import torch.nn as nn
 from .depth_estimator import DepthEstimatorBase
 
-def silog_loss(pred, target, mask=None, eps=1e-6):
-    pred = pred.squeeze(1)
-    target = target.squeeze(1)
+# def silog_loss(pred, target, mask=None, eps=1e-6):
+#     pred = pred.squeeze(1)
+#     target = target.squeeze(1)
 
-    if mask is None:
-        mask = (target > 0).float()
-    else:
-        mask = mask.squeeze(1)
+#     if mask is None:
+#         mask = (target > 0).float()
+#     else:
+#         mask = mask.squeeze(1)
 
-    log_diff = torch.log(pred + eps) - torch.log(target + eps)
-    log_diff = log_diff * mask
+#     log_diff = torch.log(pred + eps) - torch.log(target + eps)
+#     log_diff = log_diff * mask
 
-    n_valid = mask.sum()
-    silog1 = (log_diff ** 2).sum() / n_valid
-    silog2 = (log_diff.sum() ** 2) / (n_valid ** 2)
+#     n_valid = mask.sum()
+#     silog1 = (log_diff ** 2).sum() / n_valid
+#     silog2 = (log_diff.sum() ** 2) / (n_valid ** 2)
 
-    return silog1 - 0.85 * silog2
+#     return silog1 - 0.85 * silog2
 
 def si_log_loss(pred, target, mask=None, eps=1e-8, lambd=0.5):
     """https://github.com/DepthAnything/Depth-Anything-V2/blob/main/metric_depth/util/loss.py#L5"""
@@ -56,14 +56,14 @@ class DepthEstimator(DepthEstimatorBase, pl.LightningModule):
     def training_step(self, batch, batch_idx):
         x_img, x_dep = batch["student_input"].to(self.device), batch["teacher_input"].to(self.device)
         pred_depth = self(x_img)
-        loss = silog_loss(pred_depth, x_dep)
+        loss = si_log_loss(pred_depth, x_dep)
         self.log("train_loss", loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
         x_img, x_dep = batch["student_input"].to(self.device), batch["teacher_input"].to(self.device)
         pred_depth = self(x_img)
-        loss = silog_loss(pred_depth, x_dep)
+        loss = si_log_loss(pred_depth, x_dep)
         self.log("val_loss", loss)
         return loss
     

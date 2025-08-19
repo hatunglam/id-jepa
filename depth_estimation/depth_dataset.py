@@ -17,21 +17,21 @@ class DepthDataset(Dataset):
         self.max_depth = max_depth
         self.crop_size = crop_size
 
-        # Student image processor 
-        self.student_processor = AutoImageProcessor.from_pretrained("facebook/dinov2-base")
-        self.student_processor.do_center_crop = True
-        self.student_processor.crop_size = {'height': crop_size[0], 'width': crop_size[1]}
-        self.student_processor.do_resize = False
+        # image processor 
+        self.image_processor = AutoImageProcessor.from_pretrained("facebook/dinov2-base")
+        self.image_processor.do_center_crop = True
+        self.image_processor.crop_size = {'height': crop_size[0], 'width': crop_size[1]}
+        self.image_processor.do_resize = False
 
-        # Teacher image processor
-        self.teacher_processor = AutoImageProcessor.from_pretrained("facebook/dinov2-base")
-        self.teacher_processor.do_center_crop = True
+        # depth image processor
+        self.depth_processor = AutoImageProcessor.from_pretrained("facebook/dinov2-base")
+        self.depth_processor.do_center_crop = True
         if isinstance(crop_size, int): crop_size = (crop_size, crop_size)
-        self.teacher_processor.crop_size = {'height': crop_size[0], 'width': crop_size[1]}
-        self.teacher_processor.do_convert_rgb = False
-        self.teacher_processor.do_normalize = False
-        self.teacher_processor.do_rescale = False
-        self.teacher_processor.do_resize = False
+        self.depth_processor.crop_size = {'height': crop_size[0], 'width': crop_size[1]}
+        self.depth_processor.do_convert_rgb = False
+        self.depth_processor.do_normalize = False
+        self.depth_processor.do_rescale = False
+        self.depth_processor.do_resize = False
 
         self._init_dataset()
 
@@ -51,16 +51,16 @@ class DepthDataset(Dataset):
         depth_path = self.data_dir + self.nyu_data[idx][1].removeprefix("data/")
 
         image = Image.open(image_path).convert("RGB")
-        student_input = self.student_processor(images=image,
+        image_input = self.image_processor(images=image,
                                                return_tensors="pt").pixel_values.squeeze(0)  
 
         depth = np.asarray(Image.open(depth_path), dtype=np.float32).copy() / 10.0  
         depth = np.clip(depth / self.max_depth, 0.0, 1.0)  
         depth_tensor = torch.tensor(depth, dtype=torch.float32).unsqueeze(0) 
-        teacher_input = self.teacher_processor(images=depth_tensor,
+        depth_input = self.depth_processor(images=depth_tensor,
                                                return_tensors="pt").pixel_values.squeeze(0) 
 
         return {
-            'student_input': student_input, 
-            'teacher_input': teacher_input   
+            'image_input': image_input, 
+            'depth_input': depth_input   
         }
