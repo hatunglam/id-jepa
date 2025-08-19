@@ -22,6 +22,19 @@ def silog_loss(pred, target, mask=None, eps=1e-6):
 
     return silog1 - 0.85 * silog2
 
+def si_log_loss(pred, target, mask=None, eps=1e-8, lambd=0.5):
+    """https://github.com/DepthAnything/Depth-Anything-V2/blob/main/metric_depth/util/loss.py#L5"""
+    # Scale-invariant logarithmic loss
+    log_pred = torch.log(pred + eps)
+    log_target = torch.log(target + eps)
+    
+    if mask is not None:
+        log_pred = log_pred[mask]
+        log_target = log_target[mask]
+    
+    d = log_pred - log_target
+    return torch.mean(d**2) - lambd * (torch.mean(d)**2)
+
 class DepthEstimator(DepthEstimatorBase, pl.LightningModule):
     def __init__(self,
                  image_encoder,
