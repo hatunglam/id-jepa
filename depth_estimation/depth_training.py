@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 from .depth_estimator import DepthEstimatorBase
 import torch.nn.functional as F
+from typing import Union, Optional
 
 # def silog_loss(pred, target, mask=None, eps=1e-6):
 #     pred = pred.squeeze(1)
@@ -75,7 +76,7 @@ class DepthEstimator(DepthEstimatorBase, pl.LightningModule):
                 outputs=pred_depth,
                 target_sizes=[tuple(x_img.shape[-2:])] * x_img.shape[0],
             )
-            
+
         loss = si_log_loss(pred_depth, x_dep)
         self.log("val_loss", loss)
         return loss
@@ -102,7 +103,7 @@ class DepthEstimator(DepthEstimatorBase, pl.LightningModule):
         }
 
 def post_process_depth_estimation(
-    outputs: "DepthEstimatorOutput",
+    outputs,
     target_sizes: Optional[Union[torch.Tensor, list[tuple[int, int]], None]] = None,
 ) -> list[dict[str, torch.Tensor]]:
     """
