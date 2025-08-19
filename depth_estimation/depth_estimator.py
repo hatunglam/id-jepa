@@ -6,7 +6,7 @@ from transformers.models.dinov2.modeling_dinov2 import Dinov2Model
 from transformers import AutoConfig, AutoModel, DPTForDepthEstimation, DPTImageProcessor
 
 def init_DINO_encoder(checkpoint_path: str | None = "checkpoints/ID_JEPA_base_42_1.0e-03-100.ckpt",
-                      use_pretrained_depth_head: bool = False):
+                      use_pretrained_depth_head: bool = True):
     if checkpoint_path:
         ckpt = torch.load(checkpoint_path, map_location="cpu")
         state_dict = ckpt["state_dict"]
@@ -29,7 +29,7 @@ def init_DINO_encoder(checkpoint_path: str | None = "checkpoints/ID_JEPA_base_42
 
     return img_encoder, depth_estimator
 
-def init_DepthAnything_encoder(use_pretrained_depth_head: bool = False):
+def init_DepthAnything_encoder(use_pretrained_depth_head: bool = True):
     img_encoder = AutoModelForDepthEstimation.from_pretrained("depth-anything/Depth-Anything-V2-Base-hf").backbone
     
     if use_pretrained_depth_head:
@@ -42,7 +42,7 @@ def init_DepthAnything_encoder(use_pretrained_depth_head: bool = False):
 
 def init_model_encoder(config="dino-dpt",
                        checkpoint_path: str | None = "checkpoints/ID_JEPA_base_42_1.0e-03-100.ckpt",
-                       use_pretrained_depth_head: bool = False):
+                       use_pretrained_depth_head: bool = True):
     if config.lower() == "dino-dpt":
         return init_DINO_encoder(checkpoint_path=checkpoint_path,
                                  use_pretrained_depth_head=use_pretrained_depth_head)
@@ -60,7 +60,7 @@ class DepthEstimatorBase(nn.Module):
         self.output_attentions = False
         self.output_hidden_states = True
 
-    def forward_base(self, pixel_values):
+    def forward(self, pixel_values):
         output = self.image_encoder(pixel_values,
                                     output_hidden_states=self.output_hidden_states,
                                     output_attentions=self.output_attentions)
