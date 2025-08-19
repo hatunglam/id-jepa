@@ -22,7 +22,7 @@ def init_encoder(use_checkpoint=True):
     return img_encoder, depth_estimator
 
 
-class DepthEstimator(nn.Module):
+class DepthEstimatorBase(nn.Module):
     def __init__(self,
                  image_encoder,
                  depth_estimator):
@@ -32,7 +32,7 @@ class DepthEstimator(nn.Module):
         self.output_attentions = False
         self.output_hidden_states = True
 
-    def forward(self, pixel_values):
+    def forward_base(self, pixel_values):
         output = self.image_encoder(pixel_values,
                                     output_hidden_states=self.output_hidden_states,
                                     output_attentions=self.output_attentions)
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     pixel_values = inputs.pixel_values
 
     image_encoder, depth_estimator = init_encoder(use_checkpoint=True)
-    model = DepthEstimator(image_encoder, depth_estimator)
+    model = DepthEstimatorBase(image_encoder, depth_estimator)
 
     with torch.no_grad():
         predicted_depth = model(pixel_values)
