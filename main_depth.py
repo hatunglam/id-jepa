@@ -19,6 +19,8 @@ from configs import (get_image_experiment_config,
 ########EDIT_ENCODER############################
 encoder_list = ["dino-dpt", "depthanything-dpt"]
 encoder = encoder_list[0]
+
+use_pretrained_head = False
 ################################################
 
 if __name__ == "__main__":
@@ -40,7 +42,8 @@ if __name__ == "__main__":
 
     model_id = "Depth_estimator"
 
-    image_encoder, depth_estimator = init_model_encoder(config=encoder)
+    image_encoder, depth_estimator = init_model_encoder(config=encoder,
+                                                        use_pretrained_head=use_pretrained_head)
     
     model = DepthEstimator(image_encoder=image_encoder,
                            depth_estimator=depth_estimator,
