@@ -6,24 +6,6 @@ from .depth_estimator import DepthEstimatorBase
 import torch.nn.functional as F
 from typing import Union, Optional
 
-# def silog_loss(pred, target, mask=None, eps=1e-6):
-#     pred = pred.squeeze(1)
-#     target = target.squeeze(1)
-
-#     if mask is None:
-#         mask = (target > 0).float()
-#     else:
-#         mask = mask.squeeze(1)
-
-#     log_diff = torch.log(pred + eps) - torch.log(target + eps)
-#     log_diff = log_diff * mask
-
-#     n_valid = mask.sum()
-#     silog1 = (log_diff ** 2).sum() / n_valid
-#     silog2 = (log_diff.sum() ** 2) / (n_valid ** 2)
-
-#     return silog1 - 0.85 * silog2
-
 def si_log_loss(pred, target, mask=None, eps=1e-8, lambd=0.5):
     """https://github.com/DepthAnything/Depth-Anything-V2/blob/main/metric_depth/util/loss.py#L5"""
     # Scale-invariant logarithmic loss
@@ -59,10 +41,10 @@ class DepthEstimator(DepthEstimatorBase, pl.LightningModule):
         x_img, x_dep = batch["image_input"].to(self.device), batch["depth_input"].to(self.device)
         pred_depth = self(x_img)
         if pred_depth.shape[-2:] != x_dep.shape[-2:]:
-            pred_depth = post_process_depth_estimation(
+            pred_depth = torch.stack(post_process_depth_estimation(
                 outputs=pred_depth,
                 target_sizes=[tuple(x_img.shape[-2:])] * x_img.shape[0],
-            )
+            ))
             
         loss = si_log_loss(pred_depth, x_dep)
         self.log("train_loss", loss)
@@ -72,10 +54,10 @@ class DepthEstimator(DepthEstimatorBase, pl.LightningModule):
         x_img, x_dep = batch["image_input"].to(self.device), batch["depth_input"].to(self.device)
         pred_depth = self(x_img)
         if pred_depth.shape[-2:] != x_dep.shape[-2:]:
-            pred_depth = post_process_depth_estimation(
+            pred_depth = torch.stack(post_process_depth_estimation(
                 outputs=pred_depth,
                 target_sizes=[tuple(x_img.shape[-2:])] * x_img.shape[0],
-            )
+            ))
 
         loss = si_log_loss(pred_depth, x_dep)
         self.log("val_loss", loss)
@@ -124,7 +106,7 @@ def post_process_depth_estimation(
         predictions.
     """
 
-    predicted_depth = outputs.predicted_depth
+    predicted_depth = outputs
 
     if (target_sizes is not None) and (len(predicted_depth) != len(target_sizes)):
         raise ValueError(
@@ -139,6 +121,6 @@ def post_process_depth_estimation(
                 depth.unsqueeze(0).unsqueeze(1), size=target_size, mode="bicubic", align_corners=False
             ).squeeze()
 
-        results.append({"predicted_depth": depth})
+        results.append(depth)
 
     return results
