@@ -15,20 +15,20 @@ class DepthDataModule(pl.LightningDataModule):
     def setup(self, stage=None):
 
         self.train_dataset = DepthDataset(data_dir=self.dataset_config["DATA_DIR"],
-                                        mode="train",
-                                        crop_size=self.dataset_config["CROP_SIZE"],
-                                        encoder_mode=self.encoder_mode,
-                                        max_depth=self.dataset_config["MAX_DEPTH"],)
+                                          mode="train",
+                                          crop_size=self.dataset_config["CROP_SIZE"],
+                                          encoder_mode=self.encoder_mode,
+                                          max_depth=self.dataset_config["MAX_DEPTH"],)
         self.val_dataset = DepthDataset(data_dir=self.dataset_config["DATA_DIR"],
                                         mode="test",
                                         crop_size=self.dataset_config["CROP_SIZE"],
                                         encoder_mode=self.encoder_mode,
                                         max_depth=self.dataset_config["MAX_DEPTH"],)
         self.test_dataset = DepthDataset(data_dir=self.dataset_config["DATA_DIR"],
-                                        mode="test",
-                                        crop_size=self.dataset_config["CROP_SIZE"],
-                                        encoder_mode=self.encoder_mode,
-                                        max_depth=self.dataset_config["MAX_DEPTH"],)
+                                         mode="test",
+                                         crop_size=self.dataset_config["CROP_SIZE"],
+                                         encoder_mode=self.encoder_mode,
+                                         max_depth=self.dataset_config["MAX_DEPTH"],)
 
     def train_dataloader(self):
         return DataLoader(self.train_dataset,

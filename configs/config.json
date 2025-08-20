@@ -4,7 +4,6 @@
             {"USE_PRETRAINED_ENCODER": false,
              "USE_VARIATIONAL_PREDICTOR": false,
              "TEACHER_MODEL_TYPE": "DepthAnything",
-             "IMAGE_SIZE": [224,224],
              "PATCH_SIZE": 14,
              "NUM_FRAMES": 1,
              "IN_CHANS_RGB": 3,
@@ -15,7 +14,7 @@
             },
         "dataset": 
             {"DATA_DIR": "/home/ec2-user/data/data/",
-             "CROP_SIZE": [224, 224],
+             "CROP_SIZE": [448, 448],
              "TEACHER_MODEL": "DepthAnything",
              "MAX_DEPTH": 1000.0
             },

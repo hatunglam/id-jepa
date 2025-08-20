@@ -16,18 +16,20 @@ class DepthEstimatorBase(nn.Module):
                                     output_hidden_states=self.output_hidden_states,
                                     output_attentions=self.output_attentions)
         
-        num_neck_hidden_state = len(self.depth_estimator.config.neck_hidden_sizes)
+        num_neck_hidden_state = len(self.depth_estimator.num_hidden_size)
         hidden_states = output.hidden_states[-num_neck_hidden_state:]
 
         patch_height, patch_width = None, None
-        if self.depth_estimator.config.backbone_config is not None and self.depth_estimator.config.is_hybrid is False:
+        if self.image_encoder.config is not None:
             _, _, height, width = pixel_values.shape
             patch_size = self.image_encoder.config.patch_size
             patch_height = height // patch_size
             patch_width = width // patch_size
 
-        hidden_states = self.depth_estimator.neck(hidden_states, patch_height, patch_width)
-        predicted_depth = self.depth_estimator.head(hidden_states)
+        # hidden_states = self.depth_estimator.neck(hidden_states, patch_height, patch_width)
+        # predicted_depth = self.depth_estimator.head(hidden_states)
+        predicted_depth = self.depth_estimator(x=hidden_states, max_depth=10.0,
+                                               patch_height=patch_height, patch_width=patch_width)
 
         return predicted_depth
     

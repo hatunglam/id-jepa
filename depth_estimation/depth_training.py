@@ -38,30 +38,49 @@ class DepthEstimator(DepthEstimatorBase, pl.LightningModule):
         return self.forward_base(pixel_value)
         
     def training_step(self, batch, batch_idx):
-        x_img, x_dep = batch["image_input"].to(self.device), batch["depth_input"].to(self.device)
+        x_img, x_dep = batch["image_input"].to(self.device), batch["metric_depth"].to(self.device)
         pred_depth = self(x_img)
         if pred_depth.shape[-2:] != x_dep.shape[-2:]:
             pred_depth = torch.stack(post_process_depth_estimation(
                 outputs=pred_depth,
                 target_sizes=[tuple(x_img.shape[-2:])] * x_img.shape[0],
             ))
-            
+        valid_mask = torch.ones_like(x_dep).bool()
+        pred_depth = pred_depth[valid_mask]
+        x_dep = x_dep[valid_mask]
+
         loss = si_log_loss(pred_depth, x_dep)
         self.log("train_loss", loss)
         return loss
+    
+    def on_validation_start(self):
+        self.results = {'d1': torch.tensor([0.0]).cuda(), 'd2': torch.tensor([0.0]).cuda(), 'd3': torch.tensor([0.0]).cuda(), 
+                   'abs_rel': torch.tensor([0.0]).cuda(), 'sq_rel': torch.tensor([0.0]).cuda(), 'rmse': torch.tensor([0.0]).cuda(), 
+                   'rmse_log': torch.tensor([0.0]).cuda(), 'log10': torch.tensor([0.0]).cuda(), 'silog': torch.tensor([0.0]).cuda()}
 
     def validation_step(self, batch, batch_idx):
-        x_img, x_dep = batch["image_input"].to(self.device), batch["depth_input"].to(self.device)
+        x_img, x_dep = batch["image_input"].to(self.device), batch["metric_depth"].to(self.device)
         pred_depth = self(x_img)
         if pred_depth.shape[-2:] != x_dep.shape[-2:]:
             pred_depth = torch.stack(post_process_depth_estimation(
                 outputs=pred_depth,
                 target_sizes=[tuple(x_img.shape[-2:])] * x_img.shape[0],
             ))
-
+        valid_mask = torch.ones_like(x_dep).bool()
+        pred_depth = pred_depth[valid_mask]
+        x_dep = x_dep[valid_mask]
+        evaluation_result = eval_depth(pred_depth, x_dep)
+        for k in self.results.keys():
+            self.results[k] += evaluation_result[k]
         loss = si_log_loss(pred_depth, x_dep)
         self.log("val_loss", loss)
         return loss
+    
+    def on_validation_end(self):
+        for k, v in self.results.items():
+            print(k, v)
+            # self.logger.experiment(k, v, prog_bar=True, on_epoch=True, on_step=False)
+
     
     def predict_step(self, batch, batch_idx):
         x_img = batch["image_input"].to(self.device)
@@ -124,3 +143,28 @@ def post_process_depth_estimation(
         results.append(depth)
 
     return results
+
+def eval_depth(pred, target):
+    assert pred.shape == target.shape
+
+    thresh = torch.max((target / pred), (pred / target))
+
+    d1 = torch.sum(thresh < 1.25).float() / len(thresh)
+    d2 = torch.sum(thresh < 1.25 ** 2).float() / len(thresh)
+    d3 = torch.sum(thresh < 1.25 ** 3).float() / len(thresh)
+
+    diff = pred - target
+    diff_log = torch.log(pred) - torch.log(target)
+
+    abs_rel = torch.mean(torch.abs(diff) / target)
+    sq_rel = torch.mean(torch.pow(diff, 2) / target)
+
+    rmse = torch.sqrt(torch.mean(torch.pow(diff, 2)))
+    rmse_log = torch.sqrt(torch.mean(torch.pow(diff_log , 2)))
+
+    log10 = torch.mean(torch.abs(torch.log10(pred) - torch.log10(target)))
+    silog = torch.sqrt(torch.pow(diff_log, 2).mean() - 0.5 * torch.pow(diff_log.mean(), 2))
+
+    return {'d1': d1.item(), 'd2': d2.item(), 'd3': d3.item(), 'abs_rel': abs_rel.item(), 'sq_rel': sq_rel.item(), 
+            'rmse': rmse.item(), 'rmse_log': rmse_log.item(), 'log10':log10.item(), 'silog':silog.item()}
+
