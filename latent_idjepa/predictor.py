@@ -17,6 +17,8 @@ class Predictor(nn.Module):
     ):
         super().__init__()
         # Initialize the transformer-based decoder
+        predictor_embed_dim = predictor_embed_dim or embed_dim
+
         self.encoder_bottleneck = Encoder(
             dim=predictor_embed_dim, depth=depth, heads=num_heads, layer_dropout=layer_dropout
         )

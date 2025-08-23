@@ -31,7 +31,7 @@
             {"MODEL_NAME": "ID_JEPA",
              "MODEL_SIZE": "base",
              "LR": 1e-3,
-             "BATCH_SIZE": 8,
+             "BATCH_SIZE": 2,
              "NUM_WORKERS": 4,
              "PIN_MEMORY": true,
              "PERSISTENT_WORKERS": true,

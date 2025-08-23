@@ -4,10 +4,10 @@ from .predictor import Predictor
 
 
 class CrossAttentionFusion(nn.Module):
-    def __init__(self, embed_dim, num_heads):
+    def __init__(self, dim, num_heads):
         super().__init__()
-        self.cross_attn = nn.MultiheadAttention(embed_dim=embed_dim, num_heads=num_heads, batch_first=True)
-        self.norm = nn.LayerNorm(embed_dim)
+        self.cross_attn = nn.MultiheadAttention(embed_dim=dim, num_heads=num_heads, batch_first=True)
+        self.norm = nn.LayerNorm(dim)
 
     def forward(self, main, update_with):
         fused, _ = self.cross_attn(query=main, key=update_with, value=update_with)
@@ -19,7 +19,7 @@ class JEPAVAriationalLatent(nn.Module):
                  depth_encoder,
                  decoder_depth,
                  n_heads,
-                 latent_num_heads,
+                 latent_num_heads=8,
                  fusion_module = CrossAttentionFusion,
                  latent_dim=512,
                  latent_dropout_prob=0.1,
@@ -39,6 +39,8 @@ class JEPAVAriationalLatent(nn.Module):
         self.context_ratio_range = context_ratio_range
         self.target_mask_range = target_mask_range
         self.embed_dim = image_encoder.config.hidden_size
+        assert self.embed_dim is not None, "image_encoder.config.hidden_size is None!"
+        print(f"[DEBUG] embed_dim: {self.embed_dim}")
         assert self.embed_dim == image_encoder.config.hidden_size
     
         self.mask_token = nn.Parameter(torch.randn(1, 1, self.embed_dim))
@@ -75,9 +77,9 @@ class JEPAVAriationalLatent(nn.Module):
                                            )
         
         self.kl_anneal_start = kl_anneal_start
-        self.kl_anneal_end = kl_anneal_end,
-        self.kl__anneal_max = kl_anneal_max
-        self.global_step = 0
+        self.kl_anneal_end = kl_anneal_end
+        self.kl_anneal_max = kl_anneal_max
+        # self.global_step = 0
 
     def reparameterize(self, mu, logvar):
         std = torch.exp(0.5 * logvar)  # Convert log-variance to standard deviation
@@ -349,6 +351,19 @@ class JEPAVAriationalLatent(nn.Module):
             context_blocks.append(blocks_b)
 
         return torch.stack(context_blocks).cuda()  # shape: (B, num_context_blocks, D)
+    
+    def get_kl_weight(self) -> float:
+      
+        if self.global_step < self.kl_anneal_start:
+            return 0.0
+
+        elif self.global_step > self.kl_anneal_end:
+            return self.kl_anneal_max
+
+        else:
+            pct = (self.global_step - self.kl_anneal_start) / (self.kl_anneal_end - self.kl_anneal_start)
+
+            return self.kl_anneal_max * pct
         
 
 if __name__ == "__main__":
