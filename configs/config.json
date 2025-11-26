@@ -2,7 +2,6 @@
     {
         "model": 
             {"USE_PRETRAINED_ENCODER": false,
-             "USE_VARIATIONAL_PREDICTOR": false,
              "TEACHER_MODEL_TYPE": "DepthAnything",
              "PATCH_SIZE": 14,
              "NUM_FRAMES": 1,
