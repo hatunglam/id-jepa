@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 from x_transformers import Encoder
 from .predictor import Predictor
-from .variational_predictor import PredictorVAE
 from typing import Literal
 
 class JEPA_base(nn.Module):
@@ -18,7 +17,7 @@ class JEPA_base(nn.Module):
             mode="train",
             context_ratio_range=(0.85, 0.95),
             target_mask_range=(0.15, 0.25),
-            variational_predictor = False,
+            # variational_predictor = False,
             **kwargs
     ):
         super().__init__()
@@ -29,7 +28,7 @@ class JEPA_base(nn.Module):
         self.target_mask_range = target_mask_range
         self.embed_dim = image_encoder.config.hidden_size
         assert self.embed_dim == image_encoder.config.hidden_size
-        self.variational_predictor = variational_predictor
+        # self.variational_predictor = variational_predictor
 
         self.mask_token = nn.Parameter(torch.randn(1, 1, self.embed_dim))
         nn.init.trunc_normal_(self.mask_token, 0.02)
@@ -41,24 +40,13 @@ class JEPA_base(nn.Module):
             p.requires_grad = False # Freeze depth encoder
 
         # Initialize Predictor module
-        if not variational_predictor:
-            print("Training With Default Predictor")
-            self.predictor = Predictor(
-                embed_dim=self.embed_dim,
-                num_heads=self.n_heads,
-                depth=decoder_depth,
-                predictor_embed_dim=predictor_embed_dim
-                )
-        else:
-            print("Training Using Variational Predictor")
-            self.vae_predictor = PredictorVAE(
-                embed_dim=self.embed_dim,
-                hidden_size=512,
-                z_dim=256,
-                num_heads=self.n_heads,
-                depth=decoder_depth,     
+        self.predictor = Predictor(
+            embed_dim=self.embed_dim,
+            num_heads=self.n_heads,
+            depth=decoder_depth,
+            predictor_embed_dim=predictor_embed_dim
             )
-
+        
     def forward_base(
             self,
             image,
@@ -130,15 +118,10 @@ class JEPA_base(nn.Module):
                                                                             )
         
         batch_size, num_target_blocks, embed_dim = target_blocks.shape
-        # -------------------------------------------------------
+        # -------------------------------------------------------            
 
-        if self.variational_predictor:
-            predictions = self.vae_predictor(context_encoding=context_encoding,
-                                             target_masks=target_masks)            
-
-        else:
-            predictions = self.predictor(context_encoding=context_encoding,
-                                         target_masks=target_masks)
+        predictions = self.predictor(context_encoding=context_encoding,
+                                        target_masks=target_masks)
         
         return (predictions, target_blocks)
     

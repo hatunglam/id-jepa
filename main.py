@@ -2,7 +2,7 @@ from transformers import AutoModel
 from transformers.models.dinov2.modeling_dinov2 import Dinov2Model
 from transformers import AutoConfig
 from transformers import AutoModelForDepthEstimation
-from new_idjepa.training import IDJEPA
+from base_idjepa.training import IDJEPA
 from dataset.datamodule import RGBDDataModule
 import gc
 import torch
@@ -62,7 +62,6 @@ if __name__ == "__main__":
                         mode="train",
                         context_ratio_range=experiment_config["CONTEXT_SCALE"],
                         target_mask_range=experiment_config["TARGET_SCALE"],
-                        variational_predictor=model_config["USE_VARIATIONAL_PREDICTOR"],
                         lr=LR,
                         weight_decay=0.05)
 
