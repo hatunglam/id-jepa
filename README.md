@@ -11,6 +11,13 @@ These findings demonstrate that combining multi-modal JEPA with probabilistic la
 
 ## Methodology:
 
+### Dataset:
+The primary dataset used will be NYU Depth V2, a widely-used RGB-D dataset consisting of indoor images captured with a Microsoft Kinect camera. It contains aligned RGB and depth sequences at 640×480 resolution, captured across various room types such as bedrooms, kitchens, and living rooms. The dataset is well-suited for this study due to its diversity in scene layouts, object types, and rich depth variation.
+
+### Data Preprocessing:
+#### Student Input
+The student input always takes an RGB image from the NYUv2 dataset and processes it to fit the data pipeline. The data processor is initialized from the pretrained DINOv2 image processor configuration, with center cropping applied to a size of $224 \times 224$ pixels and resizing disabled. The input image is passed through this processor, which outputs the pixel values as a tensor of shape (3, 224, 224), where 3 corresponds to the RGB channels and $224 \times 224$ is the cropped image size.
+
 <to be added>
 
 
