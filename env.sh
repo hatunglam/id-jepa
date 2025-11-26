@@ -37,5 +37,5 @@ else
     echo "⚠ No requirements.txt found in $SCRIPT_DIR"
 fi
 
-echo "✅ Setup complete!"
+echo "Setup complete!"
 python --version
