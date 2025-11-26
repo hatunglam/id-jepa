@@ -18,7 +18,7 @@ These findings demonstrate that combining multi-modal JEPA with probabilistic la
 
 
 To download the dataset:
-<pre> ```bash gdown --id 1WoOZOBpOWfmwe7bknWS5PMUCLBPFKTOw ``` </pre>
+<pre> gdown --id 1WoOZOBpOWfmwe7bknWS5PMUCLBPFKTOw </pre>
 gdown --id 1WoOZOBpOWfmwe7bknWS5PMUCLBPFKTOw
 
 run tensorbaord: tensorboard --logdir lightning_logs --port 6006 --host 0.0.0.0
