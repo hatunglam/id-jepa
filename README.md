@@ -23,10 +23,10 @@ The student input always takes an RGB image from the NYUv2 dataset and processes
 
 
 
+## Project's codebase guide:
 
 To download the dataset:
 <pre>gdown --id 1WoOZOBpOWfmwe7bknWS5PMUCLBPFKTOw </pre>
-
 
 To run model training visualization on tensorboard: 
 <pre>tensorboard --logdir lightning_logs --port 6006 --host 0.0.0.0 </pre>
