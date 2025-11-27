@@ -34,7 +34,9 @@ The teacher encoder is selected based on the chosen input modality. If an RGB im
 ### 3. ID-JEPA Model
 The JEPA base module serves as the core component responsible for encoding inputs and generating masked token predictions. It takes an context-target pair as input, encodes them into patch-level embeddings, and constructs context and target representations based on a masking strategy. The sampled context embeddings and masked target tokens are then passed to the predictor module, which outputs reconstructed embeddings for the masked positions.
 
+<p align="center">
 ![ID‑JEPA Architecture Diagram](diagrams/idjepa.png)
+</p>
 
 The context input (RGB image) is first encoded by the pretrained student encoder, which produces patch embeddings.
 During inference, this full embedding can be returned directly. During training, only part of the embedding is used:
