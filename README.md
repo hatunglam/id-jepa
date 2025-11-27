@@ -20,25 +20,26 @@ The learning objective is to minimize the L2 loss between predicted and actual t
 ## Model's Structure and Mechanism 
 
 ### Dataset
-The primary dataset used will be NYU Depth V2, a widely-used RGB-D dataset consisting of indoor images captured with a Microsoft Kinect camera. It contains aligned RGB and depth sequences at 640×480 resolution, captured across various room types such as bedrooms, kitchens, and living rooms. The dataset is well-suited for this study due to its diversity in scene layouts, object types, and rich depth variation.
+The primary dataset used will be NYU Depth V2, a widely-used RGB-D dataset consisting of indoor images captured with a Microsoft Kinect camera. It contains aligned RGB and depth sequences at 640×480 resolution, captured across various room types such as bedrooms, kitchens, and living rooms. 
 
 ### Student and Teacher encoder
 #### The Student Encoder
 The student encoder is based on a Vision Transformer (ViT) backbone and can be initialized either with pretrained weights or from scratch. When pretrained initialization is selected, weights from a publicly available DINOv2 model are loaded. 
 
 #### The Teacher Encoder
-The teacher encoder is selected based on the chosen input modality, mainly for comparision purpose. If an RGB image is used as input, the teacher encoder is initialized with pretrained weights from the DepthAnything model, which is specifically designed to take RGB images and produce depth-related feature embeddings. 
-
-Alternatively, if a depth map is used as input, the teacher encoder is instantiated using the same Vision Transformer (ViT)-based architecture as the student. In this case, pretrained weights from DINOv2 are loaded to ensure that the encoder can extract high-level representations from the stacked depth input, which has been preprocessed to match the format of RGB images. 
-
-Regardless of which encoder is selected, the teacher is set to evaluation mode, and its weights are frozen throughout training. Only the student encoder is updated via backpropagation.
+The teacher encoder is selected based on the chosen input modality. If an RGB image is used as input, the teacher encoder is initialized with pretrained weights from the DepthAnything model. Alternatively, if a depth map is used as input, the teacher encoder is instantiated using the same Vision Transformer (ViT)-based architecture as the student. Regardless of which encoder is selected, the teacher is set to evaluation mode, and its weights are frozen throughout training. Only the student encoder is updated via backpropagation.
 
 ### ID-JEPA Model
 The JEPA base module serves as the core component responsible for encoding inputs and generating masked token predictions. It takes an context-target pair as input, encodes them into patch-level embeddings, and constructs context and target representations based on a masking strategy. The sampled context embeddings and masked target tokens are then passed to the predictor module, which outputs reconstructed embeddings for the masked positions.
 
 ----------diagram--------------
 
-For the context input, the data is first passed through a pretrained student encoder, which produces the embedding representation of the input image. In testing or inference mode, this embedding is returned directly for later uses. In training mode, only a subset of the embedding is used. Specifically, a context block representing a fraction of the full set of tokens is sampled from the encoded embedding. The number of tokens to retain is determined by sampling within a predefined ratio range relative to the total number of tokens. The context block is then constructed by randomly selecting tokens from the encoded embedding up to the sampled number of tokens.
+The context input (RGB image) is first encoded by the pretrained student encoder, which produces patch embeddings.
+During inference, this full embedding can be returned directly. During training, only part of the embedding is used:
+1. A Context ratio is sampled within a predefined range.
+2. Based on this ratio, a subset of patch tokens is randomly selected.
+3. These selected tokens form the context block, which is passed to the predictor.
+This teaches the model to reason about missing or unseen regions using only partial visual information.
 
 Regarding the Target input, the data is passed through a pretrained teacher encoder, which produces a sequence of depth feature maps. From this sequence, the final feature map corresponding to the deepest layer is selected to serve as the target embedding representation. This tensor has shape $(B, T, D)$, where $B$ is the batch size, $T$ is the number of patch tokens, and $D$ is the embedding dimension.
 Next, the number of tokens to be masked is randomly sampled within a predefined ratio range. Based on this number, a binary target mask of shape $(B, T)$ is generated.
