@@ -87,7 +87,54 @@ The sampled latent variable $z$, with shape $(B, C, Dz)$, is first projected bac
 
 ----------------diagram---------------------
 
+Next, a subset of the fused context embeddings is selected to form the context encoding. At the same time, the teacher encoder generates the target mask tokens, which have shape $(B, Tt, D)$, where $B$ is the batch size, $Tt$ is the number of masked positions, and D is the embedding dimension. These target masks are then concatenated with the context encoding along the sequence dimension, resulting in a combined input of shape $(B, C + Tt, D)$, where $C$ is the number of context tokens.
 
+This combined input is passed into the predictor module, which produces three outputs: (1) the predicted embeddings for the masked positions, of shape $(B, Tt, D)$; (2) the ground-truth target embeddings from the teacher encoder, also of shape $(B, Tt, D)$; and (3) the latent distribution parameters $\mu$ and $\log \sigma^2$, each with shape $(B, C, Dz)$, which are used to compute the variational loss.
+
+#### Loss Function
+
+The model is trained using a combination of two loss components: a reconstruction loss based on mean squared error (MSE) and a regularization loss based on the Kullback–Leibler (KL) divergence. The reconstruction loss measures the difference between the predicted embeddings and the ground-truth target embeddings at the masked positions:
+
+\[
+\mathcal{L}_{\text{MSE}} = \frac{1}{B \cdot T_t \cdot D} \sum \left( \hat{y} - y \right)^2
+\]
+
+where $\hat{y}$ denotes the predicted embeddings and $y$ denotes the ground-truth target blocks. This is exactly the energy function in Energy Based Learning, where better reconstructions correspond to lower overall energy values produced by the model.  
+
+To regularize the latent space, a KL divergence term is added between the learned posterior distribution $q(z|x) = \mathcal{N}(\mu, \sigma^2)$ and the standard normal prior $p(z) = \mathcal{N}(0, I)$. The KL divergence is computed per token and averaged across the batch:
+
+\[
+\mathcal{L}_{\text{KL}} = -\frac{1}{2} \sum \left( 1 + \log \sigma^2 - \mu^2 - \sigma^2 \right)
+\]
+
+The final training loss is a weighted sum of the two components:
+
+\[
+\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{MSE}} + \beta \cdot \mathcal{L}_{\text{KL}}
+\]
+
+Where $\beta$ is a dynamic weighting factor used to gradually increase the influence of the KL divergence during training. This KL weight is annealed linearly over a fixed number of training steps, starting from zero and increasing to a maximum value defined in the model configuration. It is important to set up the weight to train KL Divergence because the model is trained using two competing objectives: the reconstruction loss (typically MSE) and the KL divergence loss. The reconstruction loss encourages the model to reconstruct the input as accurately as possible, while the KL divergence tries to regularize the latent space by shaping it into a Gaussian distribution. In standard variational inference, the KL loss can become dominant early in training, causing the model to focus entirely on minimizing it, often at the expense of the reconstruction objective. To avoid this issue, the annealing schedule gradually increases the KL weight only after a predefined number of training steps. This allows the model to first focus on learning good reconstructions and then slowly adapt to the regularization imposed by the latent space structure. As a result, the training process becomes more balanced and stable. This scheduling helps prevent posterior collapse in the early stages of training and encourages the model to learn meaningful latent representations over time.
+
+### Depth Estimation Fine-Tuning
+To evaluate whether the internal representations learned by ID-JEPA can generalize to downstream depth prediction, we fine-tune the pretrained image encoder for the task of metric depth estimation.
+
+The fine-tuning architecture is built by stacking the pretrained ID-JEPA image encoder with a depth estimation head derived from the DPT-DINO model. The encoder weights are loaded from a trained checkpoint of the ID-JEPA base configuration. The depth estimation head consists of a multi-scale neck and prediction module originally from the DINO project, with minor modifications. Specifically, the final activation function is replaced with a sigmoid function to constrain the predicted values to the valid depth range.
+
+During the forward pass, input depth maps are first stacked along the channel dimension to form RGB-like input with three identical channels. This preprocessing step is necessary to match the input requirements of the pretrained DINO-based ID-JEPA encoder, which expects three-channel RGB inputs. These stacked inputs are then processed by the frozen ID-JEPA encoder to extract the final hidden states. The resulting hidden features are passed into the depth estimation head, which upsamples and aggregates the features to produce a single-channel depth prediction. The model also supports dynamic resizing using bicubic interpolation to ensure that the predicted depth map matches the ground truth target size.
+
+The training objective uses a Scale-Invariant Logarithmic Loss (SiLog) to compare the predicted and ground truth depth maps. This loss is defined as:
+
+\begin{equation}
+\mathcal{L}_{\text{SiLog}} = \frac{1}{n} \sum_{i=1}^{n} d_i^2 - \lambda \left( \frac{1}{n} \sum_{i=1}^{n} d_i \right)^2
+\end{equation}
+
+where
+
+\begin{equation}
+d_i = \log(\hat{y}_i + \epsilon) - \log(y_i + \epsilon)
+\end{equation}
+
+and $\lambda$ is a balancing hyperparameter. This formulation penalizes scale differences while preserving the relative depth structure, making it particularly suitable for metric depth estimation.
 
 
 
