@@ -99,6 +99,7 @@ A subset of the fused context tokens is selected and combined with the target ma
 * Returns the latent parameters (mean and log-variance) used to compute the variational loss
 
 ![fusion](diagrams/fusion.png)
+![f](diagrams/f.png)
 
 
 ### 6. Depth Estimation Fine-Tuning
