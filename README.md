@@ -19,17 +19,17 @@ The learning objective is to minimize the L2 loss between predicted and actual t
 
 ## Model's Structure and Mechanism 
 
-### Dataset
+### 1. Dataset
 The primary dataset used will be NYU Depth V2, a widely-used RGB-D dataset consisting of indoor images captured with a Microsoft Kinect camera. It contains aligned RGB and depth sequences at 640×480 resolution, captured across various room types such as bedrooms, kitchens, and living rooms. 
 
-### Student and Teacher encoder
-#### The Student Encoder
+### 2. Student and Teacher encoder
+#### 2.1 The Student Encoder
 The student encoder is based on a Vision Transformer (ViT) backbone and can be initialized either with pretrained weights or from scratch. When pretrained initialization is selected, weights from a publicly available DINOv2 model are loaded. 
 
-#### The Teacher Encoder
+#### 2.2 The Teacher Encoder
 The teacher encoder is selected based on the chosen input modality. If an RGB image is used as input, the teacher encoder is initialized with pretrained weights from the DepthAnything model. Alternatively, if a depth map is used as input, the teacher encoder is instantiated using the same Vision Transformer (ViT)-based architecture as the student. Regardless of which encoder is selected, the teacher is set to evaluation mode, and its weights are frozen throughout training. Only the student encoder is updated via backpropagation.
 
-### ID-JEPA Model
+### 3. ID-JEPA Model
 The JEPA base module serves as the core component responsible for encoding inputs and generating masked token predictions. It takes an context-target pair as input, encodes them into patch-level embeddings, and constructs context and target representations based on a masking strategy. The sampled context embeddings and masked target tokens are then passed to the predictor module, which outputs reconstructed embeddings for the masked positions.
 
 ----------diagram--------------
@@ -55,7 +55,7 @@ The model returns both:
 * Ground-truth target embeddings (from the teacher encoder)
 These are used to compute the loss and train the model.
 
-### The Predictor
+### 4. The Predictor
 
 The Predictor module receives the context embeddings and target mask tokens, and produces predicted embeddings for the masked regions of the target input.
 
@@ -66,30 +66,32 @@ The projected sequence is then processed by a lightweight transformer, consistin
 Finally, the module extracts the predicted embeddings for the masked target positions, which are then compared with the ground-truth target embeddings to compute the training loss.
 
 
-### The Variational Latent Predictor
+### 5. The Variational Latent Predictor
 
-#### The Fusion Model
+#### 5.1 The Fusion Model
 The Fusion module updates the context embeddings by incorporating information from a variational latent representation. It takes two inputs:
+
 * A main sequence (the original context embeddings), and
 * A secondary update sequence (latent-informed features)
+
 The fusion is performed using an 8-head multi-head cross-attention layer. The context embeddings serve as the queries, while the latent features serve as both keys and values. This allows the model to selectively attend to relevant latent information when updating the context.
+
 The attention output is added back to the original context embeddings via a residual connection, followed by layer normalization to stabilize training. The output is a fused context representation, enriched with information from the latent space, and used for downstream prediction.
 
-#### Updating the Context via Variational Inference
+#### 5.2 Updating the Context via Variational Inference
 To enhance the model’s ability to reason under uncertainty, we introduce a variational latent space into the context encoding process.
 
-The student encoder first processes the input image to produce context embeddings. These embeddings are then projected into a latent space by estimating a Gaussian distribution (mean and log-variance). Using the reparameterization trick, we sample latent variables that capture uncertainty-aware representations.
-
-To encourage robustness, a dropout mask is applied to the latent vectors during training, randomly zeroing out parts of the latent dimension.
+The student encoder first processes the input image to produce context embeddings. These embeddings are then projected into a latent space by estimating a Gaussian distribution (mean and log-variance). Using the reparameterization trick, we sample latent variables that capture uncertainty-aware representations. A dropout mask is applied to the latent vectors during training, randomly zeroing out parts of the latent dimension.
 
 
 --------diagram-------------
 
 
-#### Prediction using Updated Context
+#### 5.3 Prediction using Updated Context
 The sampled latent features are projected back to the original embedding dimension and fused with the original context embeddings via a multi-head cross-attention Fusion module. This yields a new fused context representation that incorporates latent information.
 
 A subset of the fused context tokens is selected and combined with the target mask tokens (produced by the teacher encoder). The resulting sequence is passed into the Predictor module, which:
+
 * Outputs predicted embeddings for the masked positions
 * Retrieves ground-truth target embeddings from the teacher encoder
 * Returns the latent parameters (mean and log-variance) used to compute the variational loss
@@ -97,7 +99,7 @@ A subset of the fused context tokens is selected and combined with the target ma
 -----diagram------
 
 
-### Depth Estimation Fine-Tuning
+### 6. Depth Estimation Fine-Tuning
 To evaluate the quality of the representations learned by ID-JEPA, we fine-tune the pretrained image encoder for metric depth prediction.
 
 The fine-tuning architecture combines the ID-JEPA image encoder with a lightweight depth estimation head adapted from DPT-DINO. The encoder is initialized from a trained ID-JEPA checkpoint and kept frozen during fine-tuning to isolate the effect of learned features.
