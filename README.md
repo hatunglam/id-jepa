@@ -34,7 +34,7 @@ The teacher encoder is selected based on the chosen input modality. If an RGB im
 ### 3. ID-JEPA Model
 The JEPA base module serves as the core component responsible for encoding inputs and generating masked token predictions. It takes an context-target pair as input, encodes them into patch-level embeddings, and constructs context and target representations based on a masking strategy. The sampled context embeddings and masked target tokens are then passed to the predictor module, which outputs reconstructed embeddings for the masked positions.
 
-----------diagram--------------
+![ID‑JEPA Architecture Diagram](diagrams/idjepa1.png)
 
 The context input (RGB image) is first encoded by the pretrained student encoder, which produces patch embeddings.
 During inference, this full embedding can be returned directly. During training, only part of the embedding is used:
@@ -86,7 +86,7 @@ To enhance the model’s ability to reason under uncertainty, we introduce a var
 The student encoder first processes the input image to produce context embeddings. These embeddings are then projected into a latent space by estimating a Gaussian distribution (mean and log-variance). Using the reparameterization trick, we sample latent variables that capture uncertainty-aware representations. A dropout mask is applied to the latent vectors during training, randomly zeroing out parts of the latent dimension.
 
 
---------diagram-------------
+![latent-space](diagrams/latent_predictor.png)
 
 
 #### 5.3 Prediction using Updated Context
@@ -98,7 +98,7 @@ A subset of the fused context tokens is selected and combined with the target ma
 * Retrieves ground-truth target embeddings from the teacher encoder
 * Returns the latent parameters (mean and log-variance) used to compute the variational loss
 
------diagram------
+![fusion](diagrams/fusion.png)
 
 
 ### 6. Depth Estimation Fine-Tuning
