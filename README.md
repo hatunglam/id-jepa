@@ -86,7 +86,7 @@ To enhance the model’s ability to reason under uncertainty, we introduce a var
 The student encoder first processes the input image to produce context embeddings. These embeddings are then projected into a latent space by estimating a Gaussian distribution (mean and log-variance). Using the reparameterization trick, we sample latent variables that capture uncertainty-aware representations. A dropout mask is applied to the latent vectors during training, randomly zeroing out parts of the latent dimension.
 
 
-![latent-space](diagrams/latent_predictor.pdf)
+![latent-space](diagrams/latent_predictor.png)
 
 
 #### 5.3 Prediction using Updated Context
