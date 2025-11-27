@@ -41,13 +41,19 @@ During inference, this full embedding can be returned directly. During training,
 3. These selected tokens form the context block, which is passed to the predictor.
 This teaches the model to reason about missing or unseen regions using only partial visual information.
 
-Regarding the Target input, the data is passed through a pretrained teacher encoder, which produces a sequence of depth feature maps. From this sequence, the final feature map corresponding to the deepest layer is selected to serve as the target embedding representation. This tensor has shape $(B, T, D)$, where $B$ is the batch size, $T$ is the number of patch tokens, and $D$ is the embedding dimension.
-Next, the number of tokens to be masked is randomly sampled within a predefined ratio range. Based on this number, a binary target mask of shape $(B, T)$ is generated.
-Since the mask tokens themselves do not contain any positional information, a positional embedding of shape $(1, T, D)$ is obtained by interpolating from the teacher encoder.
-The positional embedding corresponding to these positions is then added to the mask token to create the final target masks, with shape $(B, N, D)$, where N is the number of masked tokens per sample.
-Finally, the target blocks which contains the ground-truth embeddings, are constructed by slicing the encoder output at the same masked positions. These target blocks serve as the reference for prediction during training.
+The target input (depth image) is encoded by the pretrained teacher encoder, producing a sequence of depth feature embeddings. From these, the final-layer feature map is used as the target representation.
+To create the masked prediction task:
 
-The context encoding and target masks are then passed to the predictor module, which is responsible for reconstructing the masked target embeddings. The predictor outputs a tensor of shape $(B, N, D)$, corresponding to the predicted embeddings at the masked positions. These predictions are returned together with the ground-truth target blocks for use in the training objective.
+1. A masking ratio is sampled to determine how many target tokens to hide.
+2. A binary mask is generated to select the masked positions.
+3. Positional embeddings are added to the mask tokens so that the predictor can infer where each missing patch belongs.
+4. The ground-truth target blocks are constructed by slicing the teacher encoder output at the masked locations. These serve as the supervision signal during training.
+
+The sampled context embeddings and the constructed target mask tokens are passed to the predictor module, which produces reconstructed embeddings for the masked positions.
+The model returns both:
+* Predicted embeddings (for masked tokens)
+* Ground-truth target embeddings (from the teacher encoder)
+These are used to compute the loss and train the model.
 
 ### The Predictor
 
