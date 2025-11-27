@@ -11,7 +11,7 @@ This project tackles this gap by introducing the Image-Depth Joint Embedding Pre
 ## What is JEPA?
 JEPA (Joint Embedding Predictive Architecture), introduced by Yann LeCun, is a self-supervised learning framework that learns abstract representations by predicting missing or masked information, not by reconstructing raw pixels, but by aligning high-level feature embeddings. This allows JEPA to focus on structure and meaning, making it more efficient and less prone to blurriness than traditional generative models.
 
-![Image‑JEPA Architecture Diagram](diagrams/jepa.png)
+![Image‑JEPA Architecture Diagram](diagrams/ijepa.png)
 
 I-JEPA applies this idea to vision tasks. The input image is split into:
 * Context patches: visible parts of the image, used to infer the rest
