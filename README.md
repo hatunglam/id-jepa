@@ -57,99 +57,54 @@ These are used to compute the loss and train the model.
 
 ### The Predictor
 
-The Predictor module receives a context embedding and a set of target mask tokens, and it produces predicted embeddings corresponding to the masked regions of the target input.
+The Predictor module receives the context embeddings and target mask tokens, and produces predicted embeddings for the masked regions of the target input.
 
-First, the context encoding with shape $(B, Tc, D)$ and the target mask tokens with shape $(B, Tt, D)$ are concatenated along the sequence dimension, resulting in an input of shape $(B, Tc + Tt, D)$. Here, $B$ is the batch size, $Tc$ is the number of context tokens, $Tt$ is the number of target tokens, and $D$ is the embedding dimension. This combined input is then passed through a linear projection layer that maps the embedding dimension $D$ into a latent dimension of 384, producing an output of shape $(B, Tc + Tt, 384)$. This lower dimension projection is called a "bottleneck", which is a mechanism to prevent model collapsing. This lightweight predictor will force the encoder to do all the representation learning work \cite{byol}
+The two sets of tokens are first concatenated and passed through a linear bottleneck projection, which reduces their dimensionality. This bottleneck forces the encoders to do most of the representational work and helps prevent model collapse (similar to BYOL).
 
-Next, the projected sequence is processed by a multi-head self-attention encoder consisting of 8 transformer blocks, each with 12 attention heads. The transformer output retains the shape $(B, Tc + Tt, 384)$. This is then normalized and passed through a final linear projection layer that maps the latent dimension back to the original embedding dimension $D$, producing a tensor of shape $(B, Tc + Tt, D)$.
+The projected sequence is then processed by a lightweight transformer, consisting of 8 blocks with multi-head self-attention layers. After encoding, the sequence is projected back to the original embedding dimension.
 
-Finally, only the token representations corresponding to the masked target positions are extracted, resulting in predictions of shape $(B, Tt, D)$. These predicted embeddings are then compared with the ground-truth target embeddings during training.
+Finally, the module extracts the predicted embeddings for the masked target positions, which are then compared with the ground-truth target embeddings to compute the training loss.
 
 
 ### The Variational Latent Predictor
 
 #### The Fusion Model
-The fusion module is designed to update the context embeddings based on information drawn from a variational latent representation, which receives two input tensors: a main sequence and a secondary update sequence, then returns a fused representation of the same shape as the main input. The fusion is performed using an 8-head multi-head cross attention layer.The original context embeddings acting as the main sequence is used as the attention query. The update sequence, which contains the latent-informed features, is used as both the attention key and value. After attention is applied, the resulting sequence is added to the original main input through a residual connection. This is followed by a layer normalization step to stabilize the trainings.
-
-#### Reparameterization Trick
-
-To make the gradient-based optimization possible, the model uses the reparameterization trick which transforms the random sampling operation in the latent space into a differentiable function. Given the mean $\mu$ and log-variance $\log \sigma^2$ predicted from the latent projection, the standard deviation is computed as 
-\[
-\sigma = \exp\left(0.5 \cdot \log \sigma^2\right)
-\]
-
-Instead of sampling $z$ directly from a normal distribution, the model samples a noise $\epsilon \sim \mathcal{N}(0, I)$ and constructs the latent variable as 
-
-
-$\[
-z = \mu + \sigma \cdot \epsilon
-$\]
-
-This step is important because it lets the model learn from the random sampling process. Normally, sampling a value from a distribution is a random operation, and randomness makes it hard for the model to learn using gradients. To fix this, the model uses a trick: instead of sampling the latent variable \( z \) directly, it samples a random noise \( \epsilon \) and combines it with the learned mean \( \mu \) and standard deviation \( \sigma \). This creates a new sample \( z = \mu + \sigma \cdot \epsilon \), which behaves like a random sample but is still connected to the model's parameters. This trick makes the sampling step smooth and predictable enough so that gradients can flow through it during training.
+The Fusion module updates the context embeddings by incorporating information from a variational latent representation. It takes two inputs:
+* A main sequence (the original context embeddings), and
+* A secondary update sequence (latent-informed features)
+The fusion is performed using an 8-head multi-head cross-attention layer. The context embeddings serve as the queries, while the latent features serve as both keys and values. This allows the model to selectively attend to relevant latent information when updating the context.
+The attention output is added back to the original context embeddings via a residual connection, followed by layer normalization to stabilize training. The output is a fused context representation, enriched with information from the latent space, and used for downstream prediction.
 
 #### Updating the Context via Variational Inference
-The student input is first passed through the student encoder to produce context embeddings of shape $(B, C, D)$, where $B$ is the batch size, $C$ is the sequence length, and $D$ is the embedding dimension. These embeddings are compressed by a linear projection layer that maps the dimension from $D$ to a latent dimension $Dz$. The projected tensor is then passed through two separate linear layers to generate the parameters of the latent distribution: the mean ($\mu$) and the log-variance ($\log \sigma^2$), both of shape $(B, C, Dz)$.The reparameterization trick is then applied with these variables to produce the latent space $Z$ with the same shape $(B, C, Dz)$. 
+To enhance the model’s ability to reason under uncertainty, we introduce a variational latent space into the context encoding process.
 
--------------------diagram------------------------
+The student encoder first processes the input image to produce context embeddings. These embeddings are then projected into a latent space by estimating a Gaussian distribution (mean and log-variance). Using the reparameterization trick, we sample latent variables that capture uncertainty-aware representations.
 
-During training, a latent dropout mechanism is applied to encourage robustness. A binary dropout mask is sampled from a Bernoulli distribution with probability $(1 - p)$, where $p$ is the dropout rate. This mask is multiplied element-wise with the latent variable $Z$, randomly zeroing out a fraction of the latent dimensions.
+To encourage robustness, a dropout mask is applied to the latent vectors during training, randomly zeroing out parts of the latent dimension.
+
+
+--------diagram-------------
 
 
 #### Prediction using Updated Context
-The sampled latent variable $z$, with shape $(B, C, Dz)$, is first projected back to the original embedding dimension D using a linear layer, resulting in a tensor of shape $(B, C, D)$. This projected latent output is then combined with the original context embeddings to pass through the Fusion module. The fusion process produces an fused context representation of the same shape $(B, C, D)$.
+The sampled latent features are projected back to the original embedding dimension and fused with the original context embeddings via a multi-head cross-attention Fusion module. This yields a new fused context representation that incorporates latent information.
 
-----------------diagram---------------------
+A subset of the fused context tokens is selected and combined with the target mask tokens (produced by the teacher encoder). The resulting sequence is passed into the Predictor module, which:
+* Outputs predicted embeddings for the masked positions
+* Retrieves ground-truth target embeddings from the teacher encoder
+* Returns the latent parameters (mean and log-variance) used to compute the variational loss
 
-Next, a subset of the fused context embeddings is selected to form the context encoding. At the same time, the teacher encoder generates the target mask tokens, which have shape $(B, Tt, D)$, where $B$ is the batch size, $Tt$ is the number of masked positions, and D is the embedding dimension. These target masks are then concatenated with the context encoding along the sequence dimension, resulting in a combined input of shape $(B, C + Tt, D)$, where $C$ is the number of context tokens.
+-----diagram------
 
-This combined input is passed into the predictor module, which produces three outputs: (1) the predicted embeddings for the masked positions, of shape $(B, Tt, D)$; (2) the ground-truth target embeddings from the teacher encoder, also of shape $(B, Tt, D)$; and (3) the latent distribution parameters $\mu$ and $\log \sigma^2$, each with shape $(B, C, Dz)$, which are used to compute the variational loss.
-
-#### Loss Function
-
-The model is trained using a combination of two loss components: a reconstruction loss based on mean squared error (MSE) and a regularization loss based on the Kullback–Leibler (KL) divergence. The reconstruction loss measures the difference between the predicted embeddings and the ground-truth target embeddings at the masked positions:
-
-\[
-\mathcal{L}_{\text{MSE}} = \frac{1}{B \cdot T_t \cdot D} \sum \left( \hat{y} - y \right)^2
-\]
-
-where $\hat{y}$ denotes the predicted embeddings and $y$ denotes the ground-truth target blocks. This is exactly the energy function in Energy Based Learning, where better reconstructions correspond to lower overall energy values produced by the model.  
-
-To regularize the latent space, a KL divergence term is added between the learned posterior distribution $q(z|x) = \mathcal{N}(\mu, \sigma^2)$ and the standard normal prior $p(z) = \mathcal{N}(0, I)$. The KL divergence is computed per token and averaged across the batch:
-
-\[
-\mathcal{L}_{\text{KL}} = -\frac{1}{2} \sum \left( 1 + \log \sigma^2 - \mu^2 - \sigma^2 \right)
-\]
-
-The final training loss is a weighted sum of the two components:
-
-\[
-\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{MSE}} + \beta \cdot \mathcal{L}_{\text{KL}}
-\]
-
-Where $\beta$ is a dynamic weighting factor used to gradually increase the influence of the KL divergence during training. This KL weight is annealed linearly over a fixed number of training steps, starting from zero and increasing to a maximum value defined in the model configuration. It is important to set up the weight to train KL Divergence because the model is trained using two competing objectives: the reconstruction loss (typically MSE) and the KL divergence loss. The reconstruction loss encourages the model to reconstruct the input as accurately as possible, while the KL divergence tries to regularize the latent space by shaping it into a Gaussian distribution. In standard variational inference, the KL loss can become dominant early in training, causing the model to focus entirely on minimizing it, often at the expense of the reconstruction objective. To avoid this issue, the annealing schedule gradually increases the KL weight only after a predefined number of training steps. This allows the model to first focus on learning good reconstructions and then slowly adapt to the regularization imposed by the latent space structure. As a result, the training process becomes more balanced and stable. This scheduling helps prevent posterior collapse in the early stages of training and encourages the model to learn meaningful latent representations over time.
 
 ### Depth Estimation Fine-Tuning
-To evaluate whether the internal representations learned by ID-JEPA can generalize to downstream depth prediction, we fine-tune the pretrained image encoder for the task of metric depth estimation.
+To evaluate the quality of the representations learned by ID-JEPA, we fine-tune the pretrained image encoder for metric depth prediction.
 
-The fine-tuning architecture is built by stacking the pretrained ID-JEPA image encoder with a depth estimation head derived from the DPT-DINO model. The encoder weights are loaded from a trained checkpoint of the ID-JEPA base configuration. The depth estimation head consists of a multi-scale neck and prediction module originally from the DINO project, with minor modifications. Specifically, the final activation function is replaced with a sigmoid function to constrain the predicted values to the valid depth range.
+The fine-tuning architecture combines the ID-JEPA image encoder with a lightweight depth estimation head adapted from DPT-DINO. The encoder is initialized from a trained ID-JEPA checkpoint and kept frozen during fine-tuning to isolate the effect of learned features.
 
-During the forward pass, input depth maps are first stacked along the channel dimension to form RGB-like input with three identical channels. This preprocessing step is necessary to match the input requirements of the pretrained DINO-based ID-JEPA encoder, which expects three-channel RGB inputs. These stacked inputs are then processed by the frozen ID-JEPA encoder to extract the final hidden states. The resulting hidden features are passed into the depth estimation head, which upsamples and aggregates the features to produce a single-channel depth prediction. The model also supports dynamic resizing using bicubic interpolation to ensure that the predicted depth map matches the ground truth target size.
+Input depth maps are converted to RGB-like format by stacking them across three channels, ensuring compatibility with the pretrained encoder. These inputs are processed by the encoder to produce feature embeddings, which are then passed to the depth head to generate a single-channel depth map.
 
-The training objective uses a Scale-Invariant Logarithmic Loss (SiLog) to compare the predicted and ground truth depth maps. This loss is defined as:
-
-\begin{equation}
-\mathcal{L}_{\text{SiLog}} = \frac{1}{n} \sum_{i=1}^{n} d_i^2 - \lambda \left( \frac{1}{n} \sum_{i=1}^{n} d_i \right)^2
-\end{equation}
-
-where
-
-\begin{equation}
-d_i = \log(\hat{y}_i + \epsilon) - \log(y_i + \epsilon)
-\end{equation}
-
-and $\lambda$ is a balancing hyperparameter. This formulation penalizes scale differences while preserving the relative depth structure, making it particularly suitable for metric depth estimation.
-
-
+The final output is resized as needed to match the ground-truth resolution. A sigmoid activation is used to constrain predictions to valid depth ranges.
 
 ## Project's codebase guide:
 
