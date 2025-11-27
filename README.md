@@ -7,25 +7,15 @@ This project tackles this gap by introducing the Image-Depth Joint Embedding Pre
 
 
 ## What is JEPA?
-Building on the foundations of energy-based modeling, Yann LeCun introduced the Joint Embedding Predictive Architecture (JEPA) as a practical and scalable framework for learning abstract representations through prediction. While traditional EBMs define an energy function between input-output pairs and focus on assigning low energy to compatible configurations, JEPA shifts the focus toward learning a representation of the world that enables effective prediction of missing or masked information. The core motivation behind JEPA is that intelligent behavior such as reasoning, planning and perception, which relies not on reconstructing pixel-perfect details, but on forming internal representations that capture the structure and dynamics of the environment. Instead of generating or reconstructing data directly, JEPA minimizes the discrepancy between the embeddings of observable inputs and those of the predicted targets. This formulation avoids the blurriness and inefficiency commonly associated with pixel-level regression, particularly in high-dimensional modalities like vision. As such, JEPA provides a way to scale up self-supervised learning using energy-based principles while focusing on predictive abstraction, offering a promising direction toward more general and structured understanding in AI systems.
+JEPA (Joint Embedding Predictive Architecture), introduced by Yann LeCun, is a self-supervised learning framework that learns abstract representations by predicting missing or masked information, not by reconstructing raw pixels, but by aligning high-level feature embeddings. This allows JEPA to focus on structure and meaning, making it more efficient and less prone to blurriness than traditional generative models.
 
-One of the first and most important implementations of JEPA is in computer vision, where it is applied to image data . A notable example is Image JEPA (I-JEPA) , developed by Mahmoud Assran et al., which adapts the JEPA idea specifically for learning from images. The main goal of I-JEPA is to teach the model to understand what parts of an image are missing by using the parts that are visible . Instead of trying to recreate the missing image patches pixel by pixel, the model learns to predict their representations, which is the abstract features or meaning of the missing parts based on the context
+I-JEPA applies this idea to vision tasks. The input image is split into:
+* Context patches: visible parts of the image, used to infer the rest
+* Target patches: masked (hidden) regions that the model must predict
 
-The training process of I-JEPA begins by dividing an input image into two parts: the context and the target. The context includes the visible patches, while the target contains the hidden or masked patches that the model must predict. These two parts go through different components of the architecture.
+The context patches are passed through a context encoder to extract features. These features are then fed into a predictor network, which attempts to estimate the features of the target patches. Meanwhile, the full image (including both context and target) is passed through a separate target encoder, which produces the ground-truth embeddings for the target regions.
 
-First, the context is passed through a context encoder, which extracts meaningful features from the visible areas . These features are then sent to a predictor network, whose job is to estimate what the features of the hidden patches might look like. At the same time, the complete image (including both visible and hidden patches) is processed by a separate target encoder. This encoder produces the actual features of the hidden regions, which serve as the ground truth during training.
-
-The model then compares the predicted features from the predictor with the actual features produced by the target encoder. This comparison takes place in the embedding space and is measured using a simple L2 loss function, which evaluates how close the predicted and actual feature representations are at the patch level. The objective is to minimize this difference so that the model learns to form useful internal representations that can reliably infer missing content from context . 
-
-The L2 loss function used is defined as:
-\[
-\frac{1}{M} \sum_{i=1}^{M} D\left(\hat{s}_y(i), s_y(i)\right) = \frac{1}{M} \sum_{i=1}^{M} \sum_{j \in B_i} \left\| \hat{s}_{y_j} - s_{y_j} \right\|_2^2
-\]
-where $\hat{s}_y(i)$ and $s_y(i)$ represent the predicted and ground truth patch embeddings respectively, and $M$ is the number of masked patches.
-
-The training involves optimizing the parameters of the context encoder ($\theta$) and the predictor ($\phi$) using gradient-based methods such as stochastic gradient descent or Adam. In contrast, the parameters of the target encoder ($\bar{\theta}$) are not updated directly; instead, they are updated through an exponential moving average (EMA) of the context encoder's parameters . This EMA mechanism helps stabilize training and has been shown to be essential for training JEPA models, especially when using Vision Transformer backbones. The I-JEPA model follows this strategy to ensure stable and consistent learning of representations over time.
-
-In I-JEPA, both the context encoder and the target encoder are implemented using the Vision Transformer (ViT) architecture.
+The learning objective is to minimize the L2 loss between predicted and actual target embeddings in feature space. This teaches the model to infer meaningful representations of the missing content based on surrounding visual context. To stabilize training, the target encoder is not trained directly. Instead, it is updated as an exponential moving average (EMA) of the context encoder parameters—an approach inspired by momentum encoders in contrastive learning. I-JEPA implementations typically use Vision Transformers (ViTs) as both context and target encoders.
 
 ## Model's Structure and Mechanism 
 
