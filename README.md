@@ -68,9 +68,9 @@ To make the gradient-based optimization possible, the model uses the reparameter
 Instead of sampling $z$ directly from a normal distribution, the model samples a noise $\epsilon \sim \mathcal{N}(0, I)$ and constructs the latent variable as 
 
 
-\[
+$\[
 z = \mu + \sigma \cdot \epsilon
-\]
+$\]
 
 This step is important because it lets the model learn from the random sampling process. Normally, sampling a value from a distribution is a random operation, and randomness makes it hard for the model to learn using gradients. To fix this, the model uses a trick: instead of sampling the latent variable \( z \) directly, it samples a random noise \( \epsilon \) and combines it with the learned mean \( \mu \) and standard deviation \( \sigma \). This creates a new sample \( z = \mu + \sigma \cdot \epsilon \), which behaves like a random sample but is still connected to the model's parameters. This trick makes the sampling step smooth and predictable enough so that gradients can flow through it during training.
 
