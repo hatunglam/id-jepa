@@ -26,6 +26,8 @@ The learning objective is to minimize the L2 loss between predicted and actual t
 ### 1. Dataset
 The primary dataset used will be NYU Depth V2, a widely-used RGB-D dataset consisting of indoor images captured with a Microsoft Kinect camera. It contains aligned RGB and depth sequences at 640×480 resolution, captured across various room types such as bedrooms, kitchens, and living rooms. 
 
+![dataset](nyu.jpg)
+
 ### 2. Student and Teacher encoder
 #### 2.1 The Student Encoder
 The student encoder is based on a Vision Transformer (ViT) backbone and can be initialized either with pretrained weights or from scratch. When pretrained initialization is selected, weights from a publicly available DINOv2 model are loaded. 
