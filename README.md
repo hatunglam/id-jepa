@@ -116,20 +116,20 @@ The final output is resized as needed to match the ground-truth resolution. A si
 
 ## Project's codebase guide:
 
-- `base_idjepa/`  
-  Contains the core ID-JEPA model components (context-target encoder, predictor, fusion) and training loop.
+- `base_idjepa`  
+  Contains the core ID-JEPA model components and training loop.
 
-- `latent_idjepa/`  
+- `latent_idjepa`  
   Extension of base JEPA with variational latent bottleneck and latent fusion modules.
 
-- `depth_estimation/`  
+- `depth_estimation`  
   Modules and training scripts for fine-tuning JEPA on downstream depth estimation tasks.
 
 - `configs/config.json`  
   Configuration file with training hyperparameters and model settings.
 
-- `dataset/`  
-  Data pipeline and dataloaders for NYUv2 and other RGB-D datasets.
+- `dataset`  
+  Data pipeline and dataloaders for NYUv2 dataset.
 
 - `main_base.py`  
   Entry point to train the base ID-JEPA model (no latent variable).
@@ -139,12 +139,6 @@ The final output is resized as needed to match the ground-truth resolution. A si
 
 - `main_depth.py`  
   Entry point to fine-tune the JEPA encoder for depth estimation.
-
-- `diagrams/`  
-  Architecture diagrams used for documentation or the README.
-
-- `requirements.txt`  
-  Python dependencies for setting up the environment.
 
 To download the dataset:
 <pre>gdown --id 1WoOZOBpOWfmwe7bknWS5PMUCLBPFKTOw </pre>
