@@ -141,12 +141,13 @@ The final output is resized as needed to match the ground-truth resolution. A si
   Entry point to fine-tune the JEPA encoder for depth estimation.
 
 To download the dataset:
-<pre>gdown --id 1WoOZOBpOWfmwe7bknWS5PMUCLBPFKTOw </pre>
+<pre>gdown --id 1WoOZOBpOWfmwe7bknWS5PMUCLBPFKTOw /pre><
 
 To train the base ID-JEPA model:
-```bash
-python main_base.py
+<pre>python main_base.py</pre>
 
+To train the ID-JEPA model with variational latent space:
+<pre>python main_latent.py</pre>
 
 
 To run model training visualization on tensorboard: 
