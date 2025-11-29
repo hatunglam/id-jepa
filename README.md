@@ -141,7 +141,7 @@ The final output is resized as needed to match the ground-truth resolution. A si
   Entry point to fine-tune the JEPA encoder for depth estimation.
 
 To download the dataset:
-<pre>gdown --id 1WoOZOBpOWfmwe7bknWS5PMUCLBPFKTOw /pre><
+<pre>gdown --id 1WoOZOBpOWfmwe7bknWS5PMUCLBPFKTOw </pre>
 
 To train the base ID-JEPA model:
 <pre>python main_base.py</pre>
