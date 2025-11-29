@@ -143,12 +143,14 @@ The final output is resized as needed to match the ground-truth resolution. A si
 To download the dataset:
 <pre>gdown --id 1WoOZOBpOWfmwe7bknWS5PMUCLBPFKTOw </pre>
 
-To train the base ID-JEPA model:
+To train the base ID-JEPA model, execute `main_base.py` file:
 <pre>python main_base.py</pre>
 
-To train the ID-JEPA model with variational latent space:
+To train the ID-JEPA model with variational latent space, execute `main_latent.py` file:
 <pre>python main_latent.py</pre>
 
+To fine-tune the model for depth estimation, execute `main_depth.py` file:
+<pre>python main_depth.py</pre>
 
 To run model training visualization on tensorboard: 
 <pre>tensorboard --logdir lightning_logs --port 6006 --host 0.0.0.0 </pre>
