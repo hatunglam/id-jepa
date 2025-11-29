@@ -116,6 +116,23 @@ The final output is resized as needed to match the ground-truth resolution. A si
 
 ## Project's codebase guide:
 
+base_idjepa/            # Contains the core JEPA model (context-target encoder, predictor, fusion) and training loop
+latent_idjepa/          # Extension of base JEPA with variational latent bottleneck and latent fusion modules
+depth_estimation/       # Modules and scripts for fine-tuning JEPA on downstream depth estimation tasks
+
+configs/
+  config.json           # Configuration file with training hyperparameters and model settings
+
+dataset/                # Data pipeline and dataloaders for NYUv2 and other RGB-D datasets
+
+main_base.py            # Entry point to train the base ID-JEPA model (no latent variable)
+main_latent.py          # Entry point to train the ID-JEPA model with variational latent space
+main_depth.py           # Entry point to fine-tune the JEPA encoder for depth estimation
+
+diagrams/               # Architecture diagrams used for documentation or README
+
+requirements.txt        # Python dependencies for setting up the environment
+
 To download the dataset:
 <pre>gdown --id 1WoOZOBpOWfmwe7bknWS5PMUCLBPFKTOw </pre>
 
