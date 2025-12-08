@@ -77,7 +77,7 @@ Finally, the module extracts the predicted embeddings for the masked target posi
 #### 5.1 The Fusion Model
 The Fusion module updates the context embeddings by incorporating information from a variational latent representation. It takes two inputs:
 
-* A main sequence (the original context embeddings), and
+* A main sequence (the original context embeddings)
 * A secondary update sequence (latent-informed features)
 
 The fusion is performed using an 8-head multi-head cross-attention layer. The context embeddings serve as the queries, while the latent features serve as both keys and values. This allows the model to selectively attend to relevant latent information when updating the context.
